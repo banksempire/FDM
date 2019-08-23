@@ -31,7 +31,9 @@ class CleanData(_DbBase):
 
 
 class Pricing(_CollectionBase):
-    '''Collection of market price.'''
+    '''Collection of market price.
+    Collection scheme:
+    |code|date|open|high|low|close|vwap|adj_factor|'''
 
     def _keyring(self, source: _DbBase):
         '''Function that return the correct data handler given source.'''
