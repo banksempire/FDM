@@ -1,0 +1,27 @@
+{
+    "mongodb": {
+        "address": "192.168.56.1",
+        "port": 27017
+    },
+    "tushare": {
+        "DBSetting": {
+            "dbName": "tushareCache",
+            "colSetting": {
+                "daily": "dailyPricing",
+                "dailyBasic": "dailyBasic",
+                "dailyAdjFactor": "dailyAdjFactor"
+            }
+        },
+        "others": {
+            "token": "ec1d04d7a3b60188e425342261f9f91cb420a15ef32061681f340bb5"
+        }
+    },
+    "cleandata": {
+        "DBSetting": {
+            "dbName": "cleanData",
+            "colSetting": {
+                "pricing": "pricing"
+            }
+        }
+    }
+}
