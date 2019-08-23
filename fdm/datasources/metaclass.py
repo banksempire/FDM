@@ -52,6 +52,9 @@ class ColInterface:
             return 0
         return 1
 
+    def distinct(self, key: str) -> list:
+        return self.col.distinct(key)
+
 
 class _CollectionBase:
     def __init__(self, col: Collection):
