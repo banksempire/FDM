@@ -106,12 +106,3 @@ class Pricing(_CollectionBase):
     def stock_codes(self) -> list:
         '''Get stock code in the collection.'''
         return self.col.distinct('code')
-
-
-class RoR(_CollectionBase):
-
-    def update(self):
-        pass
-
-    def rebuild(self):
-        pass
