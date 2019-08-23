@@ -1,4 +1,5 @@
 import json
+from time import sleep
 from datetime import timedelta
 from datetime import datetime
 
@@ -11,7 +12,7 @@ from pymongo.collection import Collection
 
 import tushare as ts
 
-from fdm.utilities import *
+from fdm.utilities import retry
 from .metaclass import _CollectionBase, _DbBase
 
 
