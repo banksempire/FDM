@@ -1,2 +1,5 @@
-from .datasources import *
+from .datasources import (
+    Tushare,
+    CleanData
+)
 import fdm.utilities
