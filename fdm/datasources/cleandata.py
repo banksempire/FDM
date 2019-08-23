@@ -102,3 +102,12 @@ class Pricing(_CollectionBase):
         # create index
         self.col.create_indexs(['code', 'date'])
         return 0
+
+
+class RoR(_CollectionBase):
+
+    def update(self):
+        pass
+
+    def rebuild(self):
+        pass
