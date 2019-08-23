@@ -103,6 +103,10 @@ class Pricing(_CollectionBase):
         self.col.create_indexs(['code', 'date'])
         return 0
 
+    def stock_codes(self) -> list:
+        '''Get stock code in the collection.'''
+        return self.col.distinct('code')
+
 
 class RoR(_CollectionBase):
 
