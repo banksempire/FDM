@@ -60,6 +60,9 @@ class _CollectionBase:
     def __init__(self, col: Collection):
         self.col = ColInterface(col)
 
+    def last_record_date(self, datefieldname: str = 'date') -> Optional[datetime]:
+        return self.col.lastdate(datefieldname)
+
     def query(self, filter: dict = None, projection: list = None) -> DataFrame:
         df = self.col.query(filter, projection)
         return df
