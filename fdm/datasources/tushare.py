@@ -26,7 +26,7 @@ class _TushareCollectionBase(_CollectionBase):
         # Get stock list
         stock_list = DataFrame()
         for status in "LDP":
-            stock_list.append(pro.stock_basic(list_status=status))
+            stock_list = stock_list.append(pro.stock_basic(list_status=status))
         # Download data for each stock code
         for _, value in stock_list.iterrows():
             code = value['ts_code']
