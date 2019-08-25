@@ -28,8 +28,14 @@ class _TushareCollectionBase(_CollectionBase):
         # Download data for each stock code
         for _, value in stock_list.iterrows():
             code = value['ts_code']
-            df = download_function(code, pro)
-            self.col.insert_many(df)
+            startdate = datetime(1990, 1, 1)
+            today = datetime().now()
+            while startdate < today:
+                enddate = min(startdate+timedelta(4000), today)
+                df = download_function(code, pro, startdate, enddate)
+                startdate = startdate+timedelta(4001)
+                self.col.insert_many(df)
+                sleep(0.6)
             print('Code: {0} downloaded.'.format(code))
             sleep(0.6)
         return 0
@@ -87,8 +93,10 @@ class DailyBasic(_TushareCollectionBase):
 
     def rebuild(self):
         @retry()
-        def download_data(code, pro):
-            df = pro.daily_basic(ts_code=code)
+        def download_data(code, pro, start_date, end_date):
+            df = pro.daily_basic(ts_code=code,
+                                 start_date=start_date.strftime('%Y%m%d'),
+                                 end_date=end_date.strftime('%Y%m%d'))
             df['trade_date'] = pd.to_datetime(
                 df['trade_date'], format='%Y%m%d')
             return df
@@ -112,20 +120,13 @@ class DailyPrice(_TushareCollectionBase):
 
     def rebuild(self):
         @retry()
-        def download_data(code, pro):
-            startdate = datetime(1990, 1, 1)
-            today = datetime().now()
-            result = DataFrame()
-            while startdate < today:
-                df = pro.daily(ts_code=code,
-                               start_date=startdate.strftime('%Y%m%d'),
-                               end_date=min(startdate+timedelta(4000), today).strftime('%Y%m%d'))
-                df['trade_date'] = pd.to_datetime(
-                    df['trade_date'], format='%Y%m%d')
-                startdate = startdate+timedelta(4001)
-                result = result.append(df)
-                sleep(0.6)
-            return result
+        def download_data(code, pro, start_date, end_date):
+            df = pro.daily(ts_code=code,
+                           start_date=start_date.strftime('%Y%m%d'),
+                           end_date=end_date.strftime('%Y%m%d'))
+            df['trade_date'] = pd.to_datetime(
+                df['trade_date'], format='%Y%m%d')
+            return df
         print('Rebuild daily price cache.')
         self._rebuild(download_data)
         return 0
@@ -147,8 +148,10 @@ class DailyAdjFactor(_TushareCollectionBase):
 
     def rebuild(self):
         @retry()
-        def download_data(code, pro):
-            df = pro.adj_factor(ts_code=code)
+        def download_data(code, pro, start_date, end_date):
+            df = pro.adj_factor(ts_code=code,
+                                start_date=start_date.strftime('%Y%m%d'),
+                                end_date=end_date.strftime('%Y%m%d'))
             df['trade_date'] = pd.to_datetime(
                 df['trade_date'], format='%Y%m%d')
             return df
