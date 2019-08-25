@@ -30,15 +30,15 @@ class ColInterface:
             len(record), self.full_name()))
         return 0
 
-    def update_on_datecode(self,df:DataFrame,date_name:str = 'date',
-         code_name:str = 'code'):
-        for _,v in df.iterrows():
+    def update_on_datecode(self, df: DataFrame, date_name: str = 'date',
+                           code_name: str = 'code'):
+        for _, v in df.iterrows():
             code = v[code_name]
             date = v[date_name]
-            self.col.update_one(filter={'date':date,'code':code},update={'$set':
-            v.to_dict()})
+            self.col.update_one(filter={'date': date, 'code': code}, update={'$set':
+                                                                             v.to_dict()})
         return 0
-        
+
     def drop(self):
         self.col.drop()
         return 0
@@ -87,7 +87,7 @@ class _DbBase:
     def __getitem__(self, key) -> _CollectionBase:
         raise NotImplementedError
 
-    def list_collections(self)->list:
+    def list_collections(self) -> list:
         return self.db.list_collections()
 
     def review_setting(self):
