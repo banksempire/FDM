@@ -113,11 +113,19 @@ class DailyPrice(_TushareCollectionBase):
     def rebuild(self):
         @retry()
         def download_data(code, pro):
-            df = pro.daily(ts_code=code)
-            df['trade_date'] = pd.to_datetime(
-                df['trade_date'], format='%Y%m%d')
-
-            return df
+            startdate = datetime(1990, 1, 1)
+            today = datetime().now()
+            result = DataFrame()
+            while startdate < today:
+                df = pro.daily(ts_code=code,
+                               start_date=startdate.strftime('%Y%m%d'),
+                               end_date=min(startdate+timedelta(4000), today).strftime('%Y%m%d'))
+                df['trade_date'] = pd.to_datetime(
+                    df['trade_date'], format='%Y%m%d')
+                startdate = startdate+timedelta(4001)
+                result = result.append(df)
+                sleep(0.6)
+            return result
         print('Rebuild daily price cache.')
         self._rebuild(download_data)
         return 0
