@@ -7,8 +7,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from pymongo import MongoClient
-from pymongo.database import Database
-from pymongo.collection import Collection
+
 
 import tushare as ts
 
