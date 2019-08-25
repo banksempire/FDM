@@ -88,7 +88,7 @@ class Pricing(_CollectionBase):
         self.col.drop()
         # Get the correct data fetching function base on class name of "source"
         function = self._keyring(source)
-        startdate = datetime(1994, 12, 31)
+        startdate = datetime(1990, 1, 1)
         enddate = datetime.now()
         # Fill in entry by batch
         while startdate <= enddate:
