@@ -6,16 +6,13 @@ from pandas import DataFrame
 
 from pymongo import MongoClient
 
-from .metaclass import _CollectionBase, _DbBase
+from .metaclass import _CollectionBase, _DbBase, ColInterface
 
 class TempDB(_DbBase):
     '''Database that holds temporary data.'''
-    def __init__(self, client: MongoClient, settingname='tempstore'):
+    def __init__(self, client: MongoClient, settingname='tempdb'):
         super().__init__(client, settingname)
     
     def __getitem__(self,key:str):
         col = self.db[key]
-        return TempCol(col)
-
-class TempCol(_CollectionBase):
-    pass
+        return ColInterface(col)
