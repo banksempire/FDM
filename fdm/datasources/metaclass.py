@@ -39,6 +39,10 @@ class ColInterface:
                                                                              v.to_dict()})
         return 0
 
+    def update(self, filter: dict, update: dict):
+        self.col.update_many(filter, update)
+        return 0
+
     def drop(self):
         self.col.drop()
         return 0
