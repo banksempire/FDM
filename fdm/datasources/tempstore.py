@@ -1,12 +1,9 @@
-from datetime import timedelta
-from datetime import datetime
-
 import pandas as pd
 from pandas import DataFrame
 
 from pymongo import MongoClient
 
-from .metaclass import _CollectionBase, _DbBase, ColInterface
+from .metaclass import  _DbBase, ColInterface
 
 class TempDB(_DbBase):
     '''Database that holds temporary data.'''
