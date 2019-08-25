@@ -30,6 +30,14 @@ class ColInterface:
             len(record), self.full_name()))
         return 0
 
+    def update_on_datecode(self,df:DataFrame,date_name:str = 'date',
+         code_name:str = 'code'):
+        for _,v in df.iterrows():
+            code = v[code_name]
+            date = v[date_name]
+            self.col.update_one(filter={'date':date,'code':code},update={'$set':
+            v.to_dict()})
+
     def drop(self):
         self.col.drop()
         return 0
