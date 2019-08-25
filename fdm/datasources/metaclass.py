@@ -91,8 +91,8 @@ class _DbBase:
     def __getitem__(self, key) -> _CollectionBase:
         raise NotImplementedError
 
-    def list_collections(self) -> list:
-        return self.db.list_collections()
+    def list_collection_names(self) -> list:
+        return self.db.list_collection_names()
 
     def review_setting(self):
         print(self.setting)
