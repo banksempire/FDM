@@ -37,7 +37,8 @@ class ColInterface:
             date = v[date_name]
             self.col.update_one(filter={'date':date,'code':code},update={'$set':
             v.to_dict()})
-
+        return 0
+        
     def drop(self):
         self.col.drop()
         return 0
