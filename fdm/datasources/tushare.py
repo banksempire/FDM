@@ -29,7 +29,7 @@ class _TushareCollectionBase(_CollectionBase):
         for _, value in stock_list.iterrows():
             code = value['ts_code']
             startdate = datetime(1990, 1, 1)
-            today = datetime().now()
+            today = datetime.now()
             while startdate < today:
                 enddate = min(startdate+timedelta(4000), today)
                 df = download_function(code, pro, startdate, enddate)
