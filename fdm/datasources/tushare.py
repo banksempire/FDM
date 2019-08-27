@@ -38,8 +38,6 @@ class _TushareCollectionBase(_CollectionBase):
                 if record_len != 0:
                     enddate = min(df['trade_date']) - timedelta(1)
                     self.col.insert_many(df)
-                else:
-                    break
 
             print('Code: {0} downloaded.'.format(code))
             sleep(0.6)
