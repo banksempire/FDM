@@ -31,7 +31,8 @@ class _TushareCollectionBase(_CollectionBase):
         for _, value in stock_list.iterrows():
             code = value['ts_code']
             record_len = 1
-            enddate = datetime.now()
+            # minus one day to prevent imcomplete dataset been downloaded
+            enddate = datetime.now()-timedelta(1)
             while record_len != 0:
                 df = download_function(code, pro, enddate)
                 record_len = df.shape[0]
