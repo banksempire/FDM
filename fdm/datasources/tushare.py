@@ -30,14 +30,17 @@ class _TushareCollectionBase(_CollectionBase):
         # Download data for each stock code
         for _, value in stock_list.iterrows():
             code = value['ts_code']
-            startdate = datetime(1990, 1, 1)
-            today = datetime.now()
-            while startdate < today:
-                enddate = min(startdate+timedelta(4000), today)
-                df = download_function(code, pro, startdate, enddate)
-                startdate = startdate+timedelta(4001)
-                self.col.insert_many(df)
-                sleep(0.6)
+            record_len = 1
+            enddate = datetime.now()
+            while record_len != 0:
+                df = download_function(code, pro, enddate)
+                record_len = df.shape[0]
+                if record_len != 0:
+                    enddate = min(df['trade_date']) - timedelta(1)
+                    self.col.insert_many(df)
+                else:
+                    break
+
             print('Code: {0} downloaded.'.format(code))
             sleep(0.6)
         return 0
@@ -95,9 +98,8 @@ class DailyBasic(_TushareCollectionBase):
 
     def rebuild(self):
         @retry()
-        def download_data(code, pro, start_date, end_date):
+        def download_data(code, pro, end_date):
             df = pro.daily_basic(ts_code=code,
-                                 start_date=start_date.strftime('%Y%m%d'),
                                  end_date=end_date.strftime('%Y%m%d'))
             df['trade_date'] = pd.to_datetime(
                 df['trade_date'], format='%Y%m%d')
@@ -122,9 +124,8 @@ class DailyPrice(_TushareCollectionBase):
 
     def rebuild(self):
         @retry()
-        def download_data(code, pro, start_date, end_date):
+        def download_data(code, pro, end_date):
             df = pro.daily(ts_code=code,
-                           start_date=start_date.strftime('%Y%m%d'),
                            end_date=end_date.strftime('%Y%m%d'))
             df['trade_date'] = pd.to_datetime(
                 df['trade_date'], format='%Y%m%d')
@@ -150,9 +151,8 @@ class DailyAdjFactor(_TushareCollectionBase):
 
     def rebuild(self):
         @retry()
-        def download_data(code, pro, start_date, end_date):
+        def download_data(code, pro, end_date):
             df = pro.adj_factor(ts_code=code,
-                                start_date=start_date.strftime('%Y%m%d'),
                                 end_date=end_date.strftime('%Y%m%d'))
             df['trade_date'] = pd.to_datetime(
                 df['trade_date'], format='%Y%m%d')
