@@ -68,6 +68,9 @@ class ColInterface:
     def distinct(self, key: str) -> list:
         return self.col.distinct(key)
 
+    def get_client(self) -> MongoClient:
+        return self.col.database.client
+
 
 class _CollectionBase:
     def __init__(self, col: Collection):
@@ -79,6 +82,9 @@ class _CollectionBase:
     def query(self, filter: dict = None, projection: list = None) -> DataFrame:
         df = self.col.query(filter, projection)
         return df
+
+    def get_client(self) -> MongoClient:
+        return self.col.get_client()
 
 
 class _DbBase:
@@ -97,3 +103,6 @@ class _DbBase:
     def review_setting(self):
         print(self.setting)
         return 0
+
+    def get_client(self) -> MongoClient:
+        return self.db.client
