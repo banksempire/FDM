@@ -10,6 +10,7 @@ from pandas import DataFrame
 class ColInterface:
     def __init__(self, col: Collection):
         self.col = col
+        self.setting = {'code': 'code', 'date': 'date'}
 
     def list_subcollection_names(self) -> list:
         db = self.col.database
@@ -18,10 +19,47 @@ class ColInterface:
             sname = name.split('.')
             if sname[0] == self.col.name and len(sname) >= 2:
                 res.append(sname[1])
+        res.sort()
         return res
 
     def count(self) -> int:
         return self.col.estimated_document_count()
+
+    def _query(self, code_list_or_str=None, startdate: datetime = None, enddate: datetime = None,
+               fields: list = None):
+        # params preprocessing
+        subcol_list = self.list_subcollection_names()
+
+        if startdate is None:
+            startyear = int(subcol_list[0])
+            startdate = datetime(startyear, 1, 1)
+        else:
+            startyear = startdate.year
+
+        if enddate is None:
+            endyear = int(subcol_list[-1])
+            enddate = datetime(endyear, 12, 31)
+        else:
+            endyear = enddate.year
+
+        if code_list_or_str is None:
+            qparams: dict = {}
+        elif code_list_or_str is str:
+            qparams = {self.setting['code']: code_list_or_str}
+        elif code_list_or_str is list:
+            qparams = {self.setting['code']: {'$in': code_list_or_str}}
+
+        res = DataFrame()
+
+        for year in range(startyear, endyear+1):
+            subcol: Collection = self.col[str(year)]
+            qstartdate = max(startdate, datetime(year, 1, 1))
+            qenddate = min(enddate, datetime(year, 12, 31))
+            qparams[self.setting['date']] = {
+                '$gte': qstartdate, '$lte': qenddate}
+            cursor = subcol.find(filter=qparams, projection=fields)
+            res.append(DataFrame(cursor))
+        return res
 
     def query(self, filter: dict = None, projection: list = None) -> DataFrame:
         df = DataFrame(self.col.find(filter, projection))
