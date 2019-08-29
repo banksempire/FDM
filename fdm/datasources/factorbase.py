@@ -47,5 +47,25 @@ class Size(_CollectionBase):
             rpw_days: rolling periods to calculate volatility for rpw and drpw
                 only applicable when weight = rpw or drpw
             '''
-            tdb = Tushare(self.get_client()).daily_basic()
-            cdb = CleanData(self.get_client()).pricing()
+            catcode = {'mv': 'total_mv', 'fmv': 'circ_mv'}
+
+            # Init database
+            client = self.get_client()
+            tdb = Tushare(client).daily_basic()
+            cdb = CleanData(client).pricing()
+
+            # Get category score
+            catdata = tdb.query({'trade_date': {'$gt': startdate, '$lte': enddate}},
+                                projection=['ts_code', 'trade_date', catcode[category]])
+            catdata = catdata.pivot(
+                index='trade_date', columns='ts_code', values=catcode[category])
+            catdata.sort_index(inplace=True)
+
+            # Split stock codes by category score
+            def split_list_by_quantile(ts):
+                low = ts[ts.quantile(q) > ts].index
+                high = ts[ts.quantile(1-q) <= ts].index
+                return pd.Series({'low': list(low), 'high': list(high)})
+            split_list = catdata.apply(split_list_by_quantile, axis=1)
+            del catdata
+            # Get return data
