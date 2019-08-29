@@ -5,12 +5,13 @@ from typing import Optional
 from pymongo.collection import Collection
 from pymongo import MongoClient
 from pandas import DataFrame
+import pandas as pd
 
 
 class ColInterface:
     def __init__(self, col: Collection):
         self.col = col
-        self.setting = {'code': 'code', 'date': 'date'}
+        self.fields_setting = {'code': 'code', 'date': 'date'}
 
     def list_subcollection_names(self) -> list:
         db = self.col.database
@@ -25,8 +26,8 @@ class ColInterface:
     def count(self) -> int:
         return self.col.estimated_document_count()
 
-    def _query(self, code_list_or_str=None, startdate: datetime = None, enddate: datetime = None,
-               fields: list = None):
+    def query_subcol(self, code_list_or_str=None, startdate: datetime = None, enddate: datetime = None,
+                     fields: list = None):
         # params preprocessing
         subcol_list = self.list_subcollection_names()
 
@@ -45,9 +46,9 @@ class ColInterface:
         if code_list_or_str is None:
             qparams: dict = {}
         elif code_list_or_str is str:
-            qparams = {self.setting['code']: code_list_or_str}
+            qparams = {self.fields_setting['code']: code_list_or_str}
         elif code_list_or_str is list:
-            qparams = {self.setting['code']: {'$in': code_list_or_str}}
+            qparams = {self.fields_setting['code']: {'$in': code_list_or_str}}
 
         res = DataFrame()
 
@@ -55,11 +56,24 @@ class ColInterface:
             subcol: Collection = self.col[str(year)]
             qstartdate = max(startdate, datetime(year, 1, 1))
             qenddate = min(enddate, datetime(year, 12, 31))
-            qparams[self.setting['date']] = {
+            qparams[self.fields_setting['date']] = {
                 '$gte': qstartdate, '$lte': qenddate}
             cursor = subcol.find(filter=qparams, projection=fields)
             res.append(DataFrame(cursor))
         return res
+
+    def insert_many_subcol(self, df: DataFrame):
+        date_name = self.fields_setting['date']
+        code_name = self.fields_setting['name']
+        df = df.reset_index()
+        df[date_name] = pd.to_datetime(df[date_name])
+        df = df.sort_values(date_name)
+        mindate = min(df[date_name])
+        maxdate = max(df[date_name])
+
+        for year in range(mindate.year, maxdate.year+1):
+            pass
+        return 0
 
     def query(self, filter: dict = None, projection: list = None) -> DataFrame:
         df = DataFrame(self.col.find(filter, projection))
