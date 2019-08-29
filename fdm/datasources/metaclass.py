@@ -11,6 +11,15 @@ class ColInterface:
     def __init__(self, col: Collection):
         self.col = col
 
+    def list_subcollection_names(self) -> list:
+        db = self.col.database
+        res = []
+        for name in db.list_collection_names():
+            sname = name.split('.')
+            if sname[0] == self.col.name and len(sname) >= 2:
+                res.append(sname[1])
+        return res
+
     def count(self) -> int:
         return self.col.estimated_document_count()
 
