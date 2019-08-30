@@ -104,6 +104,6 @@ class Price(_CollectionBase):
         self.interface.create_indexs(['code', 'date'])
         return 0
 
-    def stock_codes(self) -> list:
+    def list_code_names(self) -> list:
         '''Get stock code in the collection.'''
-        return self.interface.distinct('code')
+        return self.interface.list_code_names()
