@@ -21,6 +21,7 @@ class ColInterface:
             self.date_name = setting['date_name']
 
     def list_subcollection_names(self) -> list:
+        '''Return all name of all subcollections.'''
         db = self.col.database
         res = []
         for name in db.list_collection_names():
@@ -31,6 +32,7 @@ class ColInterface:
         return res
 
     def list_subcollections(self):
+        '''Return all subcolletions.'''
         subcols = self.list_subcollection_names()
         res = []
         for subcol in subcols:
@@ -38,6 +40,7 @@ class ColInterface:
         return res
 
     def count(self) -> int:
+        '''Return number of documents across all sub collections.'''
         subcols = self.list_subcollection_names()
         n = 0
         for subcol in subcols:
@@ -47,6 +50,8 @@ class ColInterface:
     def query(self, code_list_or_str=None, date: datetime = None,
               startdate: datetime = None, enddate: datetime = None,
               fields: list = None):
+        '''Qurey records given code(s) and/or date.
+        When date is set, startdate and end date will be ignored. '''
         # params preprocessing
         subcol_list = self.list_subcollection_names()
 
@@ -91,6 +96,7 @@ class ColInterface:
         return res
 
     def insert_many(self, df: DataFrame):
+        '''Insert DataFrame into each sub collections accordingly.'''
         date_name = self.date_name
         df[date_name] = pd.to_datetime(df[date_name])
         df = df.sort_values(date_name)
@@ -107,10 +113,12 @@ class ColInterface:
         return 0
 
     def delete_by_date(self, date: datetime):
+        '''Delete record given date'''
         col: Collection = self.col[str(date.year)]
         col.delete_many({self.date_name: date})
 
     def drop(self):
+        '''Drop all sub collections.'''
         self.col.drop()
         subcols = self.list_subcollection_names()
         for subcol in subcols:
@@ -118,16 +126,18 @@ class ColInterface:
         return 0
 
     def lastdate(self) -> datetime:
-
+        '''Return the max(date) in all sub collections.'''
         subcols = self.list_subcollection_names()
         doc = self.col[subcols[-1]].find(projection=[self.date_name]).sort(
             [(self.date_name, -1)]).limit(1)
         return doc[0][self.date_name]
 
     def full_name(self) -> str:
+        '''Return full name of the collection.'''
         return self.col.full_name
 
     def create_indexs(self, indexes: list):
+        '''Create index for all sub collections.'''
         if self.count() != 0:
             for subcol in self.list_subcollections():
                 for index in indexes:
@@ -136,15 +146,21 @@ class ColInterface:
         return 1
 
     def distinct(self, key: str) -> list:
-        return self.col.distinct(key)
+        '''Return list of distinct value key.'''
+        res: set = set()
+        for subcol in self.list_subcollections():
+            res = res.union(subcol.distinct(key))
+        return list(res)
 
     def list_code_names(self):
+        '''Return code lists.'''
         res = set()
         for subcol in self.list_subcollections():
             res = res.union(subcol.distinct(self.code_name))
         return res
 
     def get_client(self) -> MongoClient:
+        '''Return MonogClient.'''
         return self.col.database.client
 
 
