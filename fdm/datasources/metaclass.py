@@ -93,22 +93,6 @@ class ColInterface:
 
         return 0
 
-    def query(self, filter: dict = None, projection: list = None) -> DataFrame:
-        df = DataFrame(self.col.find(filter, projection))
-        if not df.empty:
-            del df['_id']
-        return df
-
-    def insert_many(self, df: DataFrame):
-        if df.empty:
-            print('Empty Dataframe, insert_many abort.')
-            return 1
-        record = df.to_dict('record')
-        self.col.insert_many(record)
-        print('{0} records inserted into {1}'.format(
-            len(record), self.full_name()))
-        return 0
-
     def drop(self):
         self.col.drop()
         subcols = self.list_subcollection_names()
