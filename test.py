@@ -1,12 +1,17 @@
+import json
+
+import pymongo
+from pymongo import MongoClient
 
 import fdm
-from pymongo import MongoClient
-from pandas import DataFrame
-import pandas as pd
-from datetime import datetime
 
-client = MongoClient("192.168.56.1", 27017)
+with open('setting.json', 'r', encoding='utf-8') as file:
+    setting = json.loads(file.read())
 
-source = client.tushareCache.dailyAdjFactor_single.find
+dbSetting = setting['mongodb']
+client = MongoClient(dbSetting['address'], dbSetting['port'])
 
-fdm.Tushare(client)
+print(client.abc.abc.full_name)
+
+
+client.close()

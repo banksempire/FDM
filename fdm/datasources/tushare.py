@@ -22,7 +22,7 @@ class _TushareCollectionBase(_CollectionBase):
     def _rebuild(self, download_function):
         # Drop all data in collection
         self.interface.drop()
-        print('{0} droped'.format(self.interface.full_name))
+        print('{0} droped'.format(self.interface.full_name()))
         # Inititalize data source
         pro = ts.pro_api()
         # Get stock list

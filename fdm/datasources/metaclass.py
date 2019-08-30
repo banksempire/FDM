@@ -95,7 +95,8 @@ class ColInterface:
             idf = df[(df[date_name] <= datetime(year, 12, 31)) &
                      (df[date_name] >= datetime(year, 1, 1))]
             record = idf.to_dict('record')
-            self.col[str(year)].insert_many(record)
+            if len(record) != 0:
+                self.col[str(year)].insert_many(record)
 
         return 0
 
