@@ -37,8 +37,9 @@ class Pricing(_CollectionBase):
         '''Function that return the correct data handler given source.'''
         def _tushare(startdate, enddate) -> DataFrame:
             # Get raw pricing data
-            df = source['daily'].query(filter={'trade_date': {'$gt': startdate, '$lte': enddate}}, projection=[
-                'ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount'])
+
+            df = source['daily'].query(startdate=startdate, enddate=enddate, fields=[
+                                       'ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount'])
             if df.empty:
                 return df
             # Data Preprocessing
@@ -50,7 +51,7 @@ class Pricing(_CollectionBase):
             del df['vol']
             # Get adjust factor
             adf = source['dailyAdjFactor'].query(
-                filter={'trade_date': {'$gt': startdate, '$lte': enddate}})
+                startdate=startdate, enddate=enddate)
             adf.index = [adf['ts_code'], adf['trade_date']]
             # Data Preprocessing
             del adf['ts_code']
@@ -75,17 +76,17 @@ class Pricing(_CollectionBase):
         '''Update database to the latest from source'''
         function = self._keyring(source)
         enddate = datetime.now()
-        lastdate = self.col.lastdate()
+        lastdate = self.interface.lastdate()
         if lastdate is not None:
             if lastdate < enddate:
                 df = function(lastdate, enddate)
-        self.col.insert_many(df)
+        self.interface.insert_many(df)
         return 0
 
     def rebuild(self, source: _DbBase):
         '''Rebuild database from source'''
         # Clean database
-        self.col.drop()
+        self.interface.drop()
         # Get the correct data fetching function base on class name of "source"
         function = self._keyring(source)
         startdate = datetime(1990, 1, 1)
@@ -93,14 +94,14 @@ class Pricing(_CollectionBase):
         # Fill in entry by batch
         while startdate <= enddate:
             df = function(startdate, startdate+timedelta(days=365))
-            self.col.insert_many(df)
+            self.interface.insert_many(df)
             startdate = startdate+timedelta(days=365)
         # Fill in entry for residual date
         self.update(source)
         # create index
-        self.col.create_indexs(['code', 'date'])
+        self.interface.create_indexs(['code', 'date'])
         return 0
 
     def stock_codes(self) -> list:
         '''Get stock code in the collection.'''
-        return self.col.distinct('code')
+        return self.interface.distinct('code')

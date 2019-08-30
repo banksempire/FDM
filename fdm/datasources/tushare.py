@@ -7,7 +7,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from pymongo import MongoClient
-
+from pymongo import Collection
 
 import tushare as ts
 
@@ -16,11 +16,13 @@ from .metaclass import _CollectionBase, _DbBase
 
 
 class _TushareCollectionBase(_CollectionBase):
+    def __init__(self, col: Collection):
+        super().__init__(col, 'ts_code', 'trade_date')
 
     def _rebuild(self, download_function):
         # Drop all data in collection
-        self.col.drop()
-        print('{0} droped'.format(self.col.full_name))
+        self.interface.drop()
+        print('{0} droped'.format(self.interface.full_name))
         # Inititalize data source
         pro = ts.pro_api()
         # Get stock list
@@ -38,7 +40,7 @@ class _TushareCollectionBase(_CollectionBase):
                 record_len = df.shape[0]
                 if record_len != 0:
                     enddate = min(df['trade_date']) - timedelta(1)
-                    self.col.insert_many(df)
+                    self.interface.insert_many(df)
 
             print('Code: {0} downloaded.'.format(code))
             sleep(0.6)
@@ -48,7 +50,7 @@ class _TushareCollectionBase(_CollectionBase):
         # Inititalize data source
         pro = ts.pro_api()
         # Get last date in DB
-        lastdate = self.col.lastdate('trade_date')
+        lastdate = self.interface.lastdate()
         # Generate date range business day only
         daterange = pd.date_range(start=lastdate+timedelta(1),
                                   end=datetime.now(), freq="B")
@@ -58,7 +60,7 @@ class _TushareCollectionBase(_CollectionBase):
         for i in daterange:
             date = i.strftime('%Y%m%d')
             df = download_function(date, pro)
-            self.col.insert_many(df)
+            self.interface.insert_many(df)
             print('Date: {0} downloaded.'.format(date))
             sleep(0.6)
         return 0

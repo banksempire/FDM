@@ -10,10 +10,11 @@ import pandas as pd
 
 class ColInterface:
 
-    def __init__(self, col: Collection):
+    def __init__(self, col: Collection,
+                 code_name: str = 'code', date_name: str = 'date'):
         self.col = col
-        self.code_name = 'code'
-        self.date_name = 'date'
+        self.code_name = code_name
+        self.date_name = date_name
 
     def list_subcollection_names(self) -> list:
         db = self.col.database
@@ -133,8 +134,8 @@ class ColInterface:
 
 
 class _CollectionBase:
-    def __init__(self, col: Collection):
-        self.interface = ColInterface(col)
+    def __init__(self, col: Collection, code: str = 'code', date: str = 'date'):
+        self.interface = ColInterface(col, code, date)
 
     def last_record_date(self) -> Optional[datetime]:
         return self.interface.lastdate()
