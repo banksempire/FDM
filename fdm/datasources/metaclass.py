@@ -39,8 +39,9 @@ class ColInterface:
             n += self.col[subcol].estimated_document_count()
         return n
 
-    def query_subcol(self, code_list_or_str=None, startdate: datetime = None, enddate: datetime = None,
-                     fields: list = None):
+    def query(self, code_list_or_str=None,
+              startdate: datetime = None, enddate: datetime = None,
+              fields: list = None):
         # params preprocessing
         subcol_list = self.list_subcollection_names()
 
@@ -78,7 +79,7 @@ class ColInterface:
             del res['_id']
         return res
 
-    def insert_many_subcol(self, df: DataFrame):
+    def insert_many(self, df: DataFrame):
         date_name = self.date_name
         df[date_name] = pd.to_datetime(df[date_name])
         df = df.sort_values(date_name)
@@ -133,17 +134,21 @@ class ColInterface:
 
 class _CollectionBase:
     def __init__(self, col: Collection):
-        self.col = ColInterface(col)
+        self.interface = ColInterface(col)
 
     def last_record_date(self) -> Optional[datetime]:
-        return self.col.lastdate()
+        return self.interface.lastdate()
 
-    def query(self, filter: dict = None, projection: list = None) -> DataFrame:
-        df = self.col.query(filter, projection)
+    def query(self, code_list_or_str=None,
+              startdate: datetime = None, enddate: datetime = None,
+              fields: list = None) -> DataFrame:
+        df = self.interface.query(code_list_or_str,
+                                  startdate, enddate,
+                                  fields)
         return df
 
     def get_client(self) -> MongoClient:
-        return self.col.get_client()
+        return self.interface.get_client()
 
 
 class _DbBase:
