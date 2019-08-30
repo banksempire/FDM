@@ -7,6 +7,7 @@ from pandas import DataFrame
 from pymongo import MongoClient
 
 from .metaclass import _CollectionBase, _DbBase
+import fdm
 
 
 class CleanData(_DbBase):
@@ -18,28 +19,29 @@ class CleanData(_DbBase):
 
     def __getitem__(self, key) -> _CollectionBase:
         keyring = {
-            'pricing': self.pricing,
+            'price': self.price,
         }
         return keyring[key]()
 
-    def pricing(self):
-        colName = self.setting['DBSetting']['colSetting']['pricing']
+    def price(self):
+        colName = self.setting['DBSetting']['colSetting']['price']
         col = self.db[colName]
-        return Pricing(col, self.setting['DBSetting'])
+        return Price(col, self.setting['DBSetting'])
 
 
-class Pricing(_CollectionBase):
+class Price(_CollectionBase):
     '''Collection of market price.
     Collection scheme:
     |code|date|open|high|low|close|vwap|adj_factor|'''
 
-    def _keyring(self, source: _DbBase):
+    def _keyring(self, key: str):
         '''Function that return the correct data source given source.'''
         def _tushare(startdate, enddate) -> DataFrame:
             # Get raw pricing data
-
-            df = source['daily'].query(startdate=startdate, enddate=enddate, fields=[
-                                       'ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount'])
+            client = self.get_client()
+            pricesource = fdm.Tushare(client).daily_price()
+            df = pricesource.query(startdate=startdate, enddate=enddate, fields=[
+                'ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'vol', 'amount'])
             if df.empty:
                 return df
             # Data Preprocessing
@@ -50,8 +52,8 @@ class Pricing(_CollectionBase):
             del df['amount']
             del df['vol']
             # Get adjust factor
-            adf = source['dailyAdjFactor'].query(
-                startdate=startdate, enddate=enddate)
+            pricesource = fdm.Tushare(client).daily_adj()
+            adf = pricesource.query(startdate=startdate, enddate=enddate)
             adf.index = [adf['ts_code'], adf['trade_date']]
             # Data Preprocessing
             del adf['ts_code']
@@ -70,9 +72,9 @@ class Pricing(_CollectionBase):
         keyring = {
             'Tushare': _tushare
         }
-        return keyring[source.__class__.__name__]
+        return keyring[key]
 
-    def update(self, source: _DbBase):
+    def update(self, source: str = 'Tushare'):
         '''Update database to the latest from source'''
         function = self._keyring(source)
         enddate = datetime.now()
@@ -83,7 +85,7 @@ class Pricing(_CollectionBase):
         self.interface.insert_many(df)
         return 0
 
-    def rebuild(self, source: _DbBase):
+    def rebuild(self, source: str = 'Tushare'):
         '''Rebuild database from source'''
         # Clean database
         self.interface.drop()
