@@ -106,6 +106,10 @@ class ColInterface:
 
         return 0
 
+    def delete_by_date(self, date: datetime):
+        col: Collection = self.col[str(date.year)]
+        col.delete_many({self.date_name: date})
+
     def drop(self):
         self.col.drop()
         subcols = self.list_subcollection_names()
