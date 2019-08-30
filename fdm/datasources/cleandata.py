@@ -34,7 +34,7 @@ class Pricing(_CollectionBase):
     |code|date|open|high|low|close|vwap|adj_factor|'''
 
     def _keyring(self, source: _DbBase):
-        '''Function that return the correct data handler given source.'''
+        '''Function that return the correct data source given source.'''
         def _tushare(startdate, enddate) -> DataFrame:
             # Get raw pricing data
 

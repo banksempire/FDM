@@ -9,9 +9,13 @@ import pandas as pd
 
 
 class ColInterface:
+    '''This interface standardized mongodb collection-level operation over
+    a series of sub collections.
 
-    def __init__(self, col: Collection, setting: dict = None
-                 ):
+    Sub collections are splited according to year value of record's timestamp.
+    '''
+
+    def __init__(self, col: Collection, setting: dict = None):
         self.col = col
         if setting is None:
             self.code_name = 'code'
@@ -165,6 +169,8 @@ class ColInterface:
 
 
 class _CollectionBase:
+    '''A simple warper class of ColInterface'''
+
     def __init__(self, col: Collection, setting: dict):
         self.interface = ColInterface(col, setting)
 
@@ -180,6 +186,7 @@ class _CollectionBase:
         return df
 
     def batch_dump(self, batch_size=2000):
+        '''Dump all records to a df. Not work for sub collection'''
         i = 0
         l = list()
         for doc in self.interface.col.find():
