@@ -25,7 +25,7 @@ class CleanData(_DbBase):
     def pricing(self):
         colName = self.setting['DBSetting']['colSetting']['pricing']
         col = self.db[colName]
-        return Pricing(col)
+        return Pricing(col, self.setting['DBSetting'])
 
 
 class Pricing(_CollectionBase):

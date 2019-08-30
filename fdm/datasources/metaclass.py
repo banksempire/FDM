@@ -44,23 +44,29 @@ class ColInterface:
             n += self.col[subcol].estimated_document_count()
         return n
 
-    def query(self, code_list_or_str=None,
+    def query(self, code_list_or_str=None, date: datetime = None,
               startdate: datetime = None, enddate: datetime = None,
               fields: list = None):
         # params preprocessing
         subcol_list = self.list_subcollection_names()
 
-        if startdate is None:
-            startyear = int(subcol_list[0])
-            startdate = datetime(startyear, 1, 1)
-        else:
-            startyear = startdate.year
+        if date is None:
+            if startdate is None:
+                startyear = int(subcol_list[0])
+                startdate = datetime(startyear, 1, 1)
+            else:
+                startyear = startdate.year
 
-        if enddate is None:
-            endyear = int(subcol_list[-1])
-            enddate = datetime(endyear, 12, 31)
+            if enddate is None:
+                endyear = int(subcol_list[-1])
+                enddate = datetime(endyear, 12, 31)
+            else:
+                endyear = enddate.year
         else:
-            endyear = enddate.year
+            startyear = date.year
+            startdate = date
+            endyear = date.year
+            enddate = date
 
         if code_list_or_str is None:
             qparams: dict = {}
@@ -122,7 +128,7 @@ class ColInterface:
             for subcol in self.list_subcollections():
                 for index in indexes:
                     subcol.create_index(index)
-                return 0
+            return 0
         return 1
 
     def distinct(self, key: str) -> list:
@@ -145,13 +151,26 @@ class _CollectionBase:
     def last_record_date(self) -> Optional[datetime]:
         return self.interface.lastdate()
 
-    def query(self, code_list_or_str=None,
+    def query(self, code_list_or_str=None, date: datetime = None,
               startdate: datetime = None, enddate: datetime = None,
               fields: list = None) -> DataFrame:
-        df = self.interface.query(code_list_or_str,
+        df = self.interface.query(code_list_or_str, date,
                                   startdate, enddate,
                                   fields)
         return df
+
+    def batch_dump(self, batch_size=2000):
+        i = 0
+        l = list()
+        for doc in self.interface.col.find():
+            l.append(doc)
+            i += 1
+            if i == batch_size:
+                df = DataFrame(l)
+                del df['_id']
+                yield df
+                l = list()
+                i = 0
 
     def get_client(self) -> MongoClient:
         return self.interface.get_client()
