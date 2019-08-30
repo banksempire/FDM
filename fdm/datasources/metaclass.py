@@ -9,9 +9,11 @@ import pandas as pd
 
 
 class ColInterface:
+
     def __init__(self, col: Collection):
         self.col = col
-        self.fields_setting = {'code': 'code', 'date': 'date'}
+        self.code_name = 'code'
+        self.date_name = 'date'
 
     def list_subcollection_names(self) -> list:
         db = self.col.database
@@ -23,8 +25,19 @@ class ColInterface:
         res.sort()
         return res
 
+    def list_subcollections(self):
+        subcols = self.list_subcollection_names()
+        res = []
+        for subcol in subcols:
+            res.append(self.col[subcol])
+        return res
+
     def count(self) -> int:
-        return self.col.estimated_document_count()
+        subcols = self.list_subcollection_names()
+        n = 0
+        for subcol in subcols:
+            n += self.col[subcol].estimated_document_count()
+        return n
 
     def query_subcol(self, code_list_or_str=None, startdate: datetime = None, enddate: datetime = None,
                      fields: list = None):
@@ -45,10 +58,10 @@ class ColInterface:
 
         if code_list_or_str is None:
             qparams: dict = {}
-        elif code_list_or_str is str:
-            qparams = {self.fields_setting['code']: code_list_or_str}
-        elif code_list_or_str is list:
-            qparams = {self.fields_setting['code']: {'$in': code_list_or_str}}
+        elif isinstance(code_list_or_str, str):
+            qparams = {self.code_name: code_list_or_str}
+        elif isinstance(code_list_or_str, list):
+            qparams = {self.code_name: {'$in': code_list_or_str}}
 
         res = DataFrame()
 
@@ -56,23 +69,28 @@ class ColInterface:
             subcol: Collection = self.col[str(year)]
             qstartdate = max(startdate, datetime(year, 1, 1))
             qenddate = min(enddate, datetime(year, 12, 31))
-            qparams[self.fields_setting['date']] = {
+            qparams[self.date_name] = {
                 '$gte': qstartdate, '$lte': qenddate}
             cursor = subcol.find(filter=qparams, projection=fields)
-            res.append(DataFrame(cursor))
+            df = DataFrame(cursor)
+            res = res.append(df)
+        if not res.empty:
+            del res['_id']
         return res
 
     def insert_many_subcol(self, df: DataFrame):
-        date_name = self.fields_setting['date']
-        code_name = self.fields_setting['name']
-        df = df.reset_index()
+        date_name = self.date_name
         df[date_name] = pd.to_datetime(df[date_name])
         df = df.sort_values(date_name)
         mindate = min(df[date_name])
         maxdate = max(df[date_name])
 
         for year in range(mindate.year, maxdate.year+1):
-            pass
+            idf = df[(df[date_name] <= datetime(year, 12, 31)) &
+                     (df[date_name] >= datetime(year, 1, 1))]
+            record = idf.to_dict('record')
+            self.col[str(year)].insert_many(record)
+
         return 0
 
     def query(self, filter: dict = None, projection: list = None) -> DataFrame:
@@ -91,43 +109,39 @@ class ColInterface:
             len(record), self.full_name()))
         return 0
 
-    def update_on_datecode(self, df: DataFrame, date_name: str = 'date',
-                           code_name: str = 'code'):
-        for _, v in df.iterrows():
-            code = v[code_name]
-            date = v[date_name]
-            self.col.update_one(filter={'date': date, 'code': code}, update={'$set':
-                                                                             v.to_dict()})
-        return 0
-
-    def update(self, filter: dict, update: dict):
-        self.col.update_many(filter, update)
-        return 0
-
     def drop(self):
         self.col.drop()
+        subcols = self.list_subcollection_names()
+        for subcol in subcols:
+            self.col[subcol].drop()
         return 0
 
-    def lastdate(self, datefieldname: str = 'date') -> Optional[datetime]:
-        if self.count() != 0:
-            doc = self.col.find(projection=[datefieldname]).sort(
-                [(datefieldname, -1)]).limit(1)
-            return doc[0][datefieldname]
-        else:
-            return None
+    def lastdate(self) -> datetime:
+
+        subcols = self.list_subcollection_names()
+        doc = self.col[subcols[-1]].find(projection=[self.date_name]).sort(
+            [(self.date_name, -1)]).limit(1)
+        return doc[0][self.date_name]
 
     def full_name(self) -> str:
         return self.col.full_name
 
     def create_indexs(self, indexes: list):
         if self.count() != 0:
-            for index in indexes:
-                self.col.create_index(index)
-            return 0
+            for subcol in self.list_subcollections():
+                for index in indexes:
+                    subcol.create_index(index)
+                return 0
         return 1
 
     def distinct(self, key: str) -> list:
         return self.col.distinct(key)
+
+    def list_code_names(self):
+        res = set()
+        for subcol in self.list_subcollections():
+            res = res.union(subcol.distinct(self.code_name))
+        return res
 
     def get_client(self) -> MongoClient:
         return self.col.database.client
@@ -137,8 +151,8 @@ class _CollectionBase:
     def __init__(self, col: Collection):
         self.col = ColInterface(col)
 
-    def last_record_date(self, datefieldname: str = 'date') -> Optional[datetime]:
-        return self.col.lastdate(datefieldname)
+    def last_record_date(self) -> Optional[datetime]:
+        return self.col.lastdate()
 
     def query(self, filter: dict = None, projection: list = None) -> DataFrame:
         df = self.col.query(filter, projection)
