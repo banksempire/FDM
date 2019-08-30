@@ -1,0 +1,46 @@
+{
+    "mongodb": {
+        "address": "192.168.56.1",
+        "port": 27017
+    },
+    "tushare": {
+        "DBSetting": {
+            "dbName": "tushareCache",
+            "date_name": "trade_date",
+            "code_name": "ts_code",
+            "colSetting": {
+                "daily": "dailyPricing",
+                "dailyBasic": "dailyBasic",
+                "dailyAdjFactor": "dailyAdjFactor"
+            }
+        }
+    },
+    "cleandata": {
+        "DBSetting": {
+            "dbName": "cleanData",
+            "date_name": "date",
+            "code_name": "code",
+            "colSetting": {
+                "pricing": "pricing"
+            }
+        }
+    },
+    "factorbase": {
+        "DBSetting": {
+            "dbName": "factorBase",
+            "date_name": "date",
+            "code_name": "code",
+            "colSetting": {
+                "size": "size"
+            }
+        }
+    },
+    "tempdb": {
+        "DBSetting": {
+            "dbName": "tempDB",
+            "date_name": "date",
+            "code_name": "code",
+            "colSetting": {}
+        }
+    }
+}

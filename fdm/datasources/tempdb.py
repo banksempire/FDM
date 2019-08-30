@@ -14,4 +14,4 @@ class TempDB(_DbBase):
 
     def __getitem__(self, key: str):
         col = self.db[key]
-        return ColInterface(col)
+        return ColInterface(col, self.setting['DBSetting'])

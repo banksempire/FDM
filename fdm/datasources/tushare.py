@@ -7,7 +7,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from pymongo import MongoClient
-from pymongo import Collection
+from pymongo.collection import Collection
 
 import tushare as ts
 
@@ -16,8 +16,8 @@ from .metaclass import _CollectionBase, _DbBase
 
 
 class _TushareCollectionBase(_CollectionBase):
-    def __init__(self, col: Collection):
-        super().__init__(col, 'ts_code', 'trade_date')
+    def __init__(self, col: Collection, setting: dict):
+        super().__init__(col, setting)
 
     def _rebuild(self, download_function):
         # Drop all data in collection
@@ -69,7 +69,6 @@ class _TushareCollectionBase(_CollectionBase):
 class Tushare(_DbBase):
     def __init__(self, client: MongoClient, settingname='tushare'):
         super().__init__(client, settingname)
-        ts.set_token(self.setting['others']['token'])
 
     def __getitem__(self, key) -> _CollectionBase:
         keyring = {
@@ -82,17 +81,17 @@ class Tushare(_DbBase):
     def daily_price(self):
         colName = self.setting['DBSetting']['colSetting']['daily']
         col = self.db[colName]
-        return DailyPrice(col)
+        return DailyPrice(col, self.setting['DBSetting'])
 
     def daily_basic(self):
         colName = self.setting['DBSetting']['colSetting']['dailyBasic']
         col = self.db[colName]
-        return DailyBasic(col)
+        return DailyBasic(col, self.setting['DBSetting'])
 
     def daily_adj(self):
         colName = self.setting['DBSetting']['colSetting']['dailyAdjFactor']
         col = self.db[colName]
-        return DailyAdjFactor(col)
+        return DailyAdjFactor(col, self.setting['DBSetting'])
 
 
 class DailyBasic(_TushareCollectionBase):
