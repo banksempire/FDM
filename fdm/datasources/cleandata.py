@@ -45,6 +45,7 @@ class Price(_CollectionBase):
             if df.empty:
                 return df
             # Data Preprocessing
+            print(df)
             df.index = [df['ts_code'], df['trade_date']]
             del df['ts_code']
             del df['trade_date']
@@ -70,11 +71,11 @@ class Price(_CollectionBase):
             return df
 
         keyring = {
-            'Tushare': _tushare
+            'tushare': _tushare
         }
-        return keyring[key]
+        return keyring[key.lower()]
 
-    def update(self, source: str = 'Tushare'):
+    def update(self, source: str = 'tushare'):
         '''Update database to the latest from source'''
         function = self._keyring(source)
         enddate = datetime.now()
@@ -85,7 +86,7 @@ class Price(_CollectionBase):
         self.interface.insert_many(df)
         return 0
 
-    def rebuild(self, source: str = 'Tushare'):
+    def rebuild(self, source: str = 'tushare'):
         '''Rebuild database from source'''
         # Clean database
         self.interface.drop()
@@ -95,9 +96,9 @@ class Price(_CollectionBase):
         enddate = datetime.now()
         # Fill in entry by batch
         while startdate <= enddate:
-            df = function(startdate, startdate+timedelta(days=365))
+            df = function(startdate, startdate+timedelta(days=1000))
             self.interface.insert_many(df)
-            startdate = startdate+timedelta(days=365)
+            startdate = startdate+timedelta(days=1000)
         # Fill in entry for residual date
         self.update(source)
         # create index

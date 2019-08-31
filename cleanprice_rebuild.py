@@ -12,7 +12,6 @@ dbSetting = setting['mongodb']
 client = MongoClient(dbSetting['address'], dbSetting['port'])
 
 a = fdm.CleanData(client)
-source = fdm.Tushare(client)
-a.pricing().rebuild(source)
+a.price().rebuild('tushare')
 
 client.close()
