@@ -45,7 +45,6 @@ class Price(_CollectionBase):
             if df.empty:
                 return df
             # Data Preprocessing
-            print(df)
             df.index = [df['ts_code'], df['trade_date']]
             del df['ts_code']
             del df['trade_date']
