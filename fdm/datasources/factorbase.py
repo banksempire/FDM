@@ -21,9 +21,7 @@ class Factors(_DbBase):
         return keyring[key]()
 
     def size(self):
-        colName = self.setting['DBSetting']['colSetting']['size']
-        col = self.db[colName]
-        return Size(col)
+        return self.inti_col(Size, 'size')
 
 
 class Size(_CollectionBase):
@@ -52,7 +50,7 @@ class Size(_CollectionBase):
             # Init database
             client = self.get_client()
             tdb = Tushare(client).daily_basic()
-            cdb = CleanData(client).pricing()
+            cdb = CleanData(client).price()
 
             # Get category score
             catdata = tdb.query({'trade_date': {'$gt': startdate, '$lte': enddate}},

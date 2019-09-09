@@ -79,19 +79,13 @@ class Tushare(_DbBase):
         return keyring[key]()
 
     def daily_price(self):
-        colName = self.setting['DBSetting']['colSetting']['daily']
-        col = self.db[colName]
-        return DailyPrice(col, self.setting['DBSetting'])
+        return self.inti_col(DailyPrice, 'daily')
 
     def daily_basic(self):
-        colName = self.setting['DBSetting']['colSetting']['dailyBasic']
-        col = self.db[colName]
-        return DailyBasic(col, self.setting['DBSetting'])
+        return self.inti_col(DailyBasic, 'dailyBasic')
 
     def daily_adj(self):
-        colName = self.setting['DBSetting']['colSetting']['dailyAdjFactor']
-        col = self.db[colName]
-        return DailyAdjFactor(col, self.setting['DBSetting'])
+        return self.inti_col(DailyAdjFactor, 'dailyAdjFactor')
 
 
 class DailyBasic(_TushareCollectionBase):
