@@ -99,10 +99,28 @@ class ColInterface:
             del res['_id']
         return res
 
-    def rolling_query(self, window: str, code_list_or_str=None, date: datetime = None,
+    def rolling_query(self, window: int, code_list_or_str=None,
                       startdate: datetime = None, enddate: datetime = None,
-                      fields: list = None):
-        pass
+                      fields: list = None, freq: str = 'B') -> DataFrame:
+        '''Get a rolling window from collection.'''
+        if startdate is None:
+            startdate = self.firstdate()
+        if enddate is None:
+            enddate = self.lastdate()
+        drange = pd.date_range(
+            start=startdate, end=enddate, freq=freq, closed=None)
+        result = DataFrame()
+        records_count = []
+        for date in drange:
+            qres = self.query(code_list_or_str=code_list_or_str,
+                              date=date.to_pydatetime(), fields=fields)
+            if not qres.empty:
+                result = result.append(qres)
+                records_count.append(qres.shape[0])
+
+            if len(records_count) == window:
+                yield result.copy()
+                result = result.iloc[records_count.pop(0):]
 
     def insert_many(self, df: DataFrame):
         '''Insert DataFrame into each sub collections accordingly.'''
