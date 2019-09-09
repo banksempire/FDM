@@ -105,3 +105,7 @@ class Price(_CollectionBase):
     def list_code_names(self) -> list:
         '''Get stock code in the collection.'''
         return self.interface.list_code_names()
+
+    def ror(self, codes: list, date: datetime, freq='B'):
+        for df in self.interface.rolling_query(2, enddate=date, fields=['code', 'date', 'close']):
+            pass

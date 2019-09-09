@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from datetime import timedelta
 from typing import Optional
 
 from pymongo.collection import Collection
@@ -101,14 +102,16 @@ class ColInterface:
 
     def rolling_query(self, window: int, code_list_or_str=None,
                       startdate: datetime = None, enddate: datetime = None,
-                      fields: list = None, freq: str = 'B') -> DataFrame:
+                      fields: list = None, freq: str = 'B', ascending=True) -> DataFrame:
         '''Get a rolling window from collection.'''
         if startdate is None:
             startdate = self.firstdate()
         if enddate is None:
             enddate = self.lastdate()
+
         drange = pd.date_range(
-            start=startdate, end=enddate, freq=freq, closed=None)
+            start=startdate, end=enddate, freq=freq)
+        drange = drange.sort_values(ascending=ascending)
         result = DataFrame()
         records_count = []
         for date in drange:
@@ -117,6 +120,16 @@ class ColInterface:
             if not qres.empty:
                 result = result.append(qres)
                 records_count.append(qres.shape[0])
+            else:
+                cutoff_date = pd.date_range(end=date, periods=2, freq=freq)[0]
+                qdate = date-timedelta(1)
+                while qres.empty and cutoff_date < qdate:
+                    qres = self.query(code_list_or_str=code_list_or_str,
+                                      date=qdate.to_pydatetime(), fields=fields)
+                    qdate -= timedelta(1)
+                if not qres.empty:
+                    result = result.append(qres)
+                    records_count.append(qres.shape[0])
 
             if len(records_count) == window:
                 yield result.copy()

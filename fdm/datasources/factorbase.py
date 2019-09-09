@@ -53,8 +53,8 @@ class Size(_CollectionBase):
             cdb = CleanData(client).price()
 
             # Get category score
-            catdata = tdb.query({'trade_date': {'$gt': startdate, '$lte': enddate}},
-                                projection=['ts_code', 'trade_date', catcode[category]])
+            catdata = tdb.query(startdate=startdate, enddate=enddate, fields=[
+                                'ts_code', 'trade_date', catcode[category]])
             catdata = catdata.pivot(
                 index='trade_date', columns='ts_code', values=catcode[category])
             catdata.sort_index(inplace=True)
@@ -67,3 +67,5 @@ class Size(_CollectionBase):
             split_list = catdata.apply(split_list_by_quantile, axis=1)
             del catdata
             # Get return data
+            cdb.interface.rolling_query(2, startdate=startdate, enddate=enddate, fields=[
+                                        'code', 'date', 'close'])
