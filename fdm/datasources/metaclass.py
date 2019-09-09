@@ -99,6 +99,11 @@ class ColInterface:
             del res['_id']
         return res
 
+    def rolling_query(self, window: str, code_list_or_str=None, date: datetime = None,
+                      startdate: datetime = None, enddate: datetime = None,
+                      fields: list = None):
+        pass
+
     def insert_many(self, df: DataFrame):
         '''Insert DataFrame into each sub collections accordingly.'''
         date_name = self.date_name
@@ -134,6 +139,13 @@ class ColInterface:
         subcols = self.list_subcollection_names()
         doc = self.col[subcols[-1]].find(projection=[self.date_name]).sort(
             [(self.date_name, -1)]).limit(1)
+        return doc[0][self.date_name]
+
+    def firstdate(self) -> datetime:
+        '''Return the min(date) in all sub collections.'''
+        subcols = self.list_subcollection_names()
+        doc = self.col[subcols[0]].find(projection=[self.date_name]).sort(
+            [(self.date_name, 1)]).limit(1)
         return doc[0][self.date_name]
 
     def full_name(self) -> str:
