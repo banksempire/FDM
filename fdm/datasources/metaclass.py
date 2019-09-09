@@ -121,6 +121,7 @@ class ColInterface:
                 result = result.append(qres)
                 records_count.append(qres.shape[0])
             else:
+                # if not found try to 'forward fill' query
                 cutoff_date = pd.date_range(end=date, periods=2, freq=freq)[0]
                 qdate = date-timedelta(1)
                 while qres.empty and cutoff_date < qdate:
