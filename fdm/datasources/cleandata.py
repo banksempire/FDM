@@ -24,7 +24,7 @@ class CleanData(_DbBase):
         return keyring[key]()
 
     def price(self):
-        return self.inti_col(Price, 'price')
+        return self._inti_col(Price, 'price')
 
 
 class Price(_CollectionBase):

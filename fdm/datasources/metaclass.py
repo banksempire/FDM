@@ -250,7 +250,7 @@ class _DbBase:
         print(self.setting)
         return 0
 
-    def inti_col(self, colclass, setting_key: str):
+    def _inti_col(self, colclass, setting_key: str):
         colName = self.setting['DBSetting']['colSetting'][setting_key]
         col = self.db[colName]
         return colclass(col, self.setting['DBSetting'])

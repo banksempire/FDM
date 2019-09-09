@@ -21,7 +21,7 @@ class Factors(_DbBase):
         return keyring[key]()
 
     def size(self):
-        return self.inti_col(Size, 'size')
+        return self._inti_col(Size, 'size')
 
 
 class Size(_CollectionBase):
