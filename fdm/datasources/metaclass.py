@@ -53,9 +53,13 @@ class ColInterface:
             n += self.col[subcol].estimated_document_count()
         return n
 
-    def query(self, code_list_or_str=None, date=None,
-              startdate: datetime = None, enddate: datetime = None,
-              freq='B', fields: list = None, fillna=None):
+    def query(self, code_list_or_str=None,
+              date=None,
+              startdate: datetime = None,
+              enddate: datetime = None,
+              freq='B',
+              fields: list = None,
+              fillna=None):
 
         def gen_code_filter(codes) -> dict:
             '''Generate filter doc base on code or a list of codes'''
