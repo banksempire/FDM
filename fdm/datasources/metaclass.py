@@ -1,12 +1,13 @@
 import json
 from datetime import datetime
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, Tuple
 
 from pymongo.collection import Collection
 from pymongo import MongoClient
 from pandas import DataFrame
 import pandas as pd
+import numpy as np
 
 
 class ColInterface:
@@ -52,57 +53,164 @@ class ColInterface:
             n += self.col[subcol].estimated_document_count()
         return n
 
-    def query(self, code_list_or_str=None, date: datetime = None,
+    def query(self, code_list_or_str=None, date=None,
               startdate: datetime = None, enddate: datetime = None,
-              fields: list = None):
-        '''Qurey records given code(s) and/or date.
-        When date is set, startdate and end date will be ignored. '''
-        # params preprocessing
-        subcol_list = self.list_subcollection_names()
+              freq='B', fields: list = None, fillna=None):
 
-        if date is None:
-            if startdate is None:
-                startyear = int(subcol_list[0])
-                startdate = datetime(startyear, 1, 1)
+        def gen_code_filter(codes) -> dict:
+            '''Generate filter doc base on code or a list of codes'''
+            if codes is None:
+                return {}
+            elif isinstance(codes, str):
+                return {self.code_name: codes}
             else:
-                startyear = startdate.year
+                return {self.code_name: {'$in': list(codes)}}
 
-            if enddate is None:
-                endyear = int(subcol_list[-1])
-                enddate = datetime(endyear, 12, 31)
+        def query_on_dates(codes, dates, fields) -> DataFrame:
+            '''Query data on date or a list of dates.'''
+            q_params = gen_code_filter(codes)
+            if isinstance(dates, (datetime, pd.Timestamp)):
+                q_params[self.date_name] = dates
+                year = dates.year
+                res = DataFrame(self.col[str(year)].find(
+                    q_params, projection=fields))
+                return res
             else:
-                endyear = enddate.year
+                res = DataFrame()
+                for year in {i.year for i in dates}:
+                    q_dates = [i for i in dates if i.year == year]
+                    q_params[self.date_name] = {'$in': q_dates}
+                    df = DataFrame(self.col[str(year)].find(
+                        q_params, projection=fields))
+                    res = res.append(df)
+                return res
+
+        def query_on_daterange(codes, start: datetime, end: datetime, fields, freq: str) -> DataFrame:
+            '''Query data on given date range and frequency'''
+            q_params = gen_code_filter(codes)
+            if freq in ('B', 'D'):
+                res = DataFrame()
+                for year in range(start.year, end.year+1):
+                    subcol = self.col[str(year)]
+                    q_params[self.date_name] = {
+                        '$gte': max(start, datetime(year, 1, 1)),
+                        '%lte': min(end, datetime(year, 12, 31))
+                    }
+                    cursor = subcol.find(q_params, projection=fields)
+                    df = DataFrame(cursor)
+                    res = res.append(df)
+                return res
+            else:
+                daterange = pd.date_range(
+                    start=start, end=end, freq=freq, normalize=True)
+                return query_on_dates(codes, daterange, fields)
+
+        def deal_nonetype_start_end(start, end) -> Tuple[datetime, datetime]:
+            '''Interprete start and end date if is None'''
+            subcols = self.list_subcollection_names()
+            if start is None:
+                year = int(subcols[0])
+                start = datetime(year, 1, 1)
+            if end is None:
+                year = int(subcols[-1])
+                end = datetime(year, 12, 31)
+            return start, end
+
+        def ensure_date_code_fields(f) -> Optional[list]:
+            '''Ensure [code, date] in query fields.'''
+            if not f is None:
+                f = f.copy()
+                f = list(set(f).union((self.code_name, self.date_name)))
+            return f
+
+        def del_id(df) -> DataFrame:
+            '''Delete column['_id'] from result'''
+            if not df.empty:
+                del df['_id']
+            return df
+
+        def fill_nan(df: DataFrame, freq, method) -> DataFrame:
+            def get_na_codelist_by_date():
+                def _(s: pd.Series):
+                    isna = s.isna()
+                    isna[isna == True]
+                    res = isna[isna == True].index
+                    if res.empty:
+                        return np.nan
+                    else:
+                        return set(res)
+
+                pdf = df.pivot(index=date_name, columns=code_name,
+                               values=code_name)
+                pdf = pdf.reindex(pd.date_range(startdate, enddate, freq=freq))
+                na_list = pdf.apply(_, axis=1).dropna()
+                return na_list
+
+            def cutoff_methods(key):
+                def f_cutoff(date):
+                    return pd.date_range(end=date, periods=2, freq=freq)[0]
+
+                def b_cutoff(date):
+                    return pd.date_range(start=date, periods=2, freq=freq)[-1]
+
+                keyring = {
+                    'ffill': f_cutoff,
+                    'bfill': b_cutoff, }
+                try:
+                    return keyring[key]
+                except:
+                    raise KeyError('Unexpected fillna method: {0}'.format(key))
+
+            def fill_data(df, date, cutoff, codes):
+                if method == 'ffill':
+                    near_date = self.get_nearest_date(codes, date, True)
+                    if near_date > cutoff:
+                        res = query_on_dates(codes, near_date, fields)
+                        res[date_name] = date
+                        df = df.append(res)
+                        filled_codes = set(res[code_name])
+                        unfilled_codes = codes - filled_codes
+                        if len(unfilled_codes) > 0:
+                            df = fill_data(df, date, cutoff, unfilled_codes)
+                elif method == 'bfill':
+                    near_date = self.get_nearest_date(codes, date, False)
+                    if near_date < cutoff:
+                        res = query_on_dates(codes, near_date, fields)
+                        res[date_name] = date
+                        df = df.append(res)
+                        filled_codes = set(res[code_name])
+                        unfilled_codes = codes - filled_codes
+                        if len(unfilled_codes) > 0:
+                            df = fill_data(df, date, cutoff, unfilled_codes)
+                return df
+
+            cutoff_method = cutoff_methods(method)
+            date_name = self.date_name
+            code_name = self.code_name
+            fields = list(df.columns)
+
+            nacodes = get_na_codelist_by_date()
+            for date, codes in nacodes.items():
+                cutoff = cutoff_method(date)
+                df = fill_data(df, date, cutoff, codes)
+            return df
+
+        fields = ensure_date_code_fields(fields)
+        if not date is None:
+            res = query_on_dates(code_list_or_str, date, fields)
+            return del_id(res)
         else:
-            startyear = date.year
-            startdate = date
-            endyear = date.year
-            enddate = date
-
-        if code_list_or_str is None:
-            qparams: dict = {}
-        elif isinstance(code_list_or_str, str):
-            qparams = {self.code_name: code_list_or_str}
-        elif isinstance(code_list_or_str, list):
-            qparams = {self.code_name: {'$in': code_list_or_str}}
-
-        res = DataFrame()
-
-        for year in range(startyear, endyear+1):
-            subcol: Collection = self.col[str(year)]
-            qstartdate = max(startdate, datetime(year, 1, 1))
-            qenddate = min(enddate, datetime(year, 12, 31))
-            qparams[self.date_name] = {
-                '$gte': qstartdate, '$lte': qenddate}
-            cursor = subcol.find(filter=qparams, projection=fields)
-            df = DataFrame(cursor)
-            res = res.append(df)
-        if not res.empty:
-            del res['_id']
-        return res
+            start, end = deal_nonetype_start_end(startdate, enddate)
+            res = query_on_daterange(
+                code_list_or_str, start, end, fields, freq)
+            if fillna is None or freq in ('B', 'D'):
+                return del_id(res)
+            else:
+                return del_id(fill_nan(res, freq, fillna))
 
     def rolling_query(self, window: int, code_list_or_str=None,
                       startdate: datetime = None, enddate: datetime = None,
-                      fields: list = None, freq: str = 'B', ascending=True) -> DataFrame:
+                      fields: list = None, freq: str = 'B', ascending=True, ffill=False) -> DataFrame:
         '''Get a rolling window from collection.'''
         if startdate is None:
             startdate = self.firstdate()
@@ -173,6 +281,28 @@ class ColInterface:
             [(self.date_name, -1)]).limit(1)
         return doc[0][self.date_name]
 
+    def get_nearest_date(self, code_list, date=datetime.now(), latest=True) -> datetime:
+        '''Return the latest/earliest record given code and date'''
+        filter_doc = {self.code_name: {'$in': list(code_list)}}
+
+        if latest:
+            filter_doc[self.date_name] = {'$lte': date}
+            order = -1
+        else:
+            filter_doc[self.date_name] = {'$gte': date}
+            order = 1
+        maxyear = datetime.now().year
+        year = date.year
+        while year in range(1980, maxyear+1):
+            try:
+                doc = self.col[str(year)].find(filter_doc, projection=[self.date_name]).sort(
+                    [(self.date_name, order)]).limit(1)
+                return doc[0][self.date_name]
+            except:
+                year += order
+        raise KeyError(
+            'Cannot find codes: {0} in given database'.format(code_list))
+
     def firstdate(self) -> datetime:
         '''Return the min(date) in all sub collections.'''
         subcols = self.list_subcollection_names()
@@ -221,12 +351,16 @@ class _CollectionBase:
     def last_record_date(self) -> Optional[datetime]:
         return self.interface.lastdate()
 
-    def query(self, code_list_or_str=None, date: datetime = None,
+    def query(self, code_list_or_str=None, date=None,
               startdate: datetime = None, enddate: datetime = None,
-              fields: list = None) -> DataFrame:
-        df = self.interface.query(code_list_or_str, date,
-                                  startdate, enddate,
-                                  fields)
+              freq='B', fields: list = None, fillna=None) -> DataFrame:
+        df = self.interface.query(code_list_or_str,
+                                  date,
+                                  startdate,
+                                  enddate,
+                                  freq,
+                                  fields,
+                                  fillna)
         return df
 
     def batch_dump(self, batch_size=2000):

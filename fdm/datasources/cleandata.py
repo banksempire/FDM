@@ -106,6 +106,9 @@ class Price(_CollectionBase):
         '''Get stock code in the collection.'''
         return self.interface.list_code_names()
 
-    def ror(self, codes: list, date: datetime, freq='B'):
-        for df in self.interface.rolling_query(2, enddate=date, fields=['code', 'date', 'close']):
-            pass
+    def ror(self, date: datetime, codes: list = None, freq='B', price='close'):
+        for df in self.interface.rolling_query(2, enddate=date, fields=['code', 'date', price], freq=freq, ascending=False):
+            tdf = df.pivot(index='date', columns='code',
+                           values=price).sort_index()
+            #tdf = tdf.pct_change().dropna(how='all')
+            return tdf
