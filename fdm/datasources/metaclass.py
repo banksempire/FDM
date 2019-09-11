@@ -139,12 +139,25 @@ class ColInterface:
                         return np.nan
                     else:
                         return set(res)
+                if not df.empty:
+                    pdf = df.pivot(index=date_name, columns=code_name,
+                                   values=code_name)
+                    pdf = pdf.reindex(pd.date_range(
+                        startdate, enddate, freq=freq))
+                    na_list = pdf.apply(_, axis=1).dropna()
+                    return na_list
+                else:
+                    if code_list_or_str is None:
+                        index = pd.date_range(startdate, enddate, freq=freq)
+                        s = np.array(None).repeat(len(index))
+                        return pd.Series(s, index=index)
+                    else:
+                        index = pd.date_range(startdate, enddate, freq=freq)
+                        s = pd.Series(index=index)
 
-                pdf = df.pivot(index=date_name, columns=code_name,
-                               values=code_name)
-                pdf = pdf.reindex(pd.date_range(startdate, enddate, freq=freq))
-                na_list = pdf.apply(_, axis=1).dropna()
-                return na_list
+                        def _(s):
+                            return set(code_list_or_str)
+                        return s.apply(_)
 
             def cutoff_methods(key):
                 def f_cutoff(date):
@@ -162,32 +175,42 @@ class ColInterface:
                     raise KeyError('Unexpected fillna method: {0}'.format(key))
 
             def fill_data(df, date, cutoff, codes):
+                if codes is None:
+                    codes = self.list_code_names()
                 if method == 'ffill':
-                    near_date = self.get_nearest_date(codes, date, True)
-                    if near_date > cutoff:
-                        res = query_on_dates(codes, near_date, fields)
-                        res[date_name] = date
-                        df = df.append(res)
-                        filled_codes = set(res[code_name])
-                        unfilled_codes = codes - filled_codes
-                        if len(unfilled_codes) > 0:
-                            df = fill_data(df, date, cutoff, unfilled_codes)
+                    try:
+                        near_date = self.get_nearest_date(codes, date, True)
+                        if near_date > cutoff:
+                            res = query_on_dates(codes, near_date, fields)
+                            res[date_name] = date
+                            df = df.append(res)
+                            filled_codes = set(res[code_name])
+                            unfilled_codes = codes - filled_codes
+                            if len(unfilled_codes) > 0:
+                                df = fill_data(
+                                    df, date, cutoff, unfilled_codes)
+                    except KeyError:
+                        # Solve KeyError induced by self.get_nearest_date if no value return
+                        pass
                 elif method == 'bfill':
-                    near_date = self.get_nearest_date(codes, date, False)
-                    if near_date < cutoff:
-                        res = query_on_dates(codes, near_date, fields)
-                        res[date_name] = date
-                        df = df.append(res)
-                        filled_codes = set(res[code_name])
-                        unfilled_codes = codes - filled_codes
-                        if len(unfilled_codes) > 0:
-                            df = fill_data(df, date, cutoff, unfilled_codes)
+                    try:
+                        near_date = self.get_nearest_date(codes, date, False)
+                        if near_date < cutoff:
+                            res = query_on_dates(codes, near_date, fields)
+                            res[date_name] = date
+                            df = df.append(res)
+                            filled_codes = set(res[code_name])
+                            unfilled_codes = codes - filled_codes
+                            if len(unfilled_codes) > 0:
+                                df = fill_data(
+                                    df, date, cutoff, unfilled_codes)
+                    except KeyError:
+                        pass
                 return df
 
             cutoff_method = cutoff_methods(method)
             date_name = self.date_name
             code_name = self.code_name
-            fields = list(df.columns)
 
             nacodes = get_na_codelist_by_date()
             for date, codes in nacodes.items():
