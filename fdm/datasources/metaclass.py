@@ -143,34 +143,32 @@ class ColInterface:
             return df
 
         def fill_nan(df: DataFrame, freq, method) -> DataFrame:
-            def get_na_codelist_by_date():
-                def _(s: pd.Series):
-                    isna = s.isna()
-                    isna[isna == True]
-                    res = isna[isna == True].index
-                    if res.empty:
-                        return np.nan
-                    else:
-                        return set(res)
+            def iter_na_list_by_date():
                 if not df.empty:
+                    def _(s: pd.Series):
+                        isna = s.isna()
+                        isna[isna == True]
+                        res = isna[isna == True].index
+                        return set(res)
+                    
                     pdf = df.pivot(index=date_name, columns=code_name,
                                    values=code_name)
                     pdf = pdf.reindex(pd.date_range(
                         startdate, enddate, freq=freq))
-                    na_list = pdf.apply(_, axis=1).dropna()
-                    return na_list
+                    for date ,value in pdf.iterrows():
+                        na_list = _(value)
+                        if len(na_list) !=0:
+                            yield date, na_list
                 else:
                     if code_list_or_str is None:
                         index = pd.date_range(startdate, enddate, freq=freq)
-                        s = np.array(None).repeat(len(index))
-                        return pd.Series(s, index=index)
+                        for date in index:
+                            yield date, None
                     else:
                         index = pd.date_range(startdate, enddate, freq=freq)
-                        s = pd.Series(index=index)
-
-                        def _(s):
-                            return set(code_list_or_str)
-                        return s.apply(_)
+                        na_list = set(code_list_or_str)
+                        for date in index:
+                            yield date, na_list
 
             def cutoff_methods(key):
                 def f_cutoff(date):
@@ -225,8 +223,7 @@ class ColInterface:
             date_name = self.date_name
             code_name = self.code_name
 
-            nacodes = get_na_codelist_by_date()
-            for date, codes in nacodes.items():
+            for date, codes in iter_na_list_by_date():
                 cutoff = cutoff_method(date)
                 df = fill_data(df, date, cutoff, codes)
             return df
