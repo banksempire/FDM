@@ -100,6 +100,8 @@ class DailyBasic(_TushareCollectionBase):
             return df
         print('Rebuild daily basic cache.')
         self._rebuild(download_data)
+        self.interface.create_indexs(
+            [self.interface.date_name, self.interface.code_name])
         return 0
 
     def update(self):
