@@ -16,9 +16,7 @@ client = MongoClient(dbSetting['address'], dbSetting['port'])
 pricedb = fdm.CleanData(client).price()
 
 #df = pricedb.ror(datetime(2018, 12, 31), freq='Y')
-df = pricedb.query(
-    startdate=datetime(2019, 5, 1), enddate=datetime(2019, 6, 1), freq='W', fillna='ffill')  #
-
-print(df.pivot(index='date', columns='code', values='close').sort_index())
+for df in pricedb.interface.rolling_query(10,  ['000001.SZ', '000002.SZ'], startdate=datetime(2018, 1, 1), enddate=datetime(2019, 6, 30), freq='M', fillna='ffill'):
+    print(df.pivot(index='date', columns='code', values='close').sort_index())
 
 client.close()

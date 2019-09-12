@@ -60,7 +60,16 @@ class ColInterface:
               freq='B',
               fields: list = None,
               fillna=None):
+        '''Query data from database.
 
+        code_list_or_str: [None, code, List[codes]] when set to None, will query all codes.
+        date: [None, datetime, List[datetime]] when set, startdate, enddate, freq will be ignored.
+        startdate: [None, datetime]
+        enddate: [None, datetime]
+        freq: freq type of pandas date_range
+        fields: fields ot return from database
+        fillna: [None, 'ffill', 'bfill']
+        '''
         def gen_code_filter(codes) -> dict:
             '''Generate filter doc base on code or a list of codes'''
             if codes is None:
@@ -235,41 +244,49 @@ class ColInterface:
             else:
                 return del_id(fill_nan(res, freq, fillna))
 
-    def rolling_query(self, window: int, code_list_or_str=None,
-                      startdate: datetime = None, enddate: datetime = None,
-                      fields: list = None, freq: str = 'B', ascending=True, ffill=False) -> DataFrame:
+    def rolling_query(self,
+                      window: int,
+                      code_list_or_str=None,
+                      startdate: datetime = None,
+                      enddate: datetime = None,
+                      fields: list = None,
+                      freq='B',
+                      ascending=True,
+                      fillna='ffill') -> DataFrame:
         '''Get a rolling window from collection.'''
+
         if startdate is None:
             startdate = self.firstdate()
         if enddate is None:
             enddate = self.lastdate()
 
-        drange = pd.date_range(
-            start=startdate, end=enddate, freq=freq)
-        drange = drange.sort_values(ascending=ascending)
+        drange = pd.date_range(start=startdate,
+                               end=enddate,
+                               freq=freq,
+                               normalize=True).sort_values(ascending=ascending)
+
         result = DataFrame()
         records_count = []
-        for date in drange:
-            qres = self.query(code_list_or_str=code_list_or_str,
-                              date=date.to_pydatetime(), fields=fields)
-            if not qres.empty:
-                result = result.append(qres)
-                records_count.append(qres.shape[0])
-            else:
-                # if not found try to 'forward fill' query
-                cutoff_date = pd.date_range(end=date, periods=2, freq=freq)[0]
-                qdate = date-timedelta(1)
-                while qres.empty and cutoff_date < qdate:
-                    qres = self.query(code_list_or_str=code_list_or_str,
-                                      date=qdate.to_pydatetime(), fields=fields)
-                    qdate -= timedelta(1)
-                if not qres.empty:
-                    result = result.append(qres)
-                    records_count.append(qres.shape[0])
+        def gen_start_end(date):
+            start = pd.date_range(end = date,periods=2,freq = freq)[0]+timedelta(1)
+            return start.to_pydatetime(),date.to_pydatetime()
+        
+        for start, end in (gen_start_end(date) for date in drange):
+            df = self.query(code_list_or_str,
+                            startdate=start,
+                            enddate=end,
+                            freq=freq,
+                            fields=fields,
+                            fillna=fillna)
+
+            if not df.empty:
+                result = result.append(df)
+                records_count.append(df.shape[0])
 
             if len(records_count) == window:
-                yield result.copy()
+                yield result
                 result = result.iloc[records_count.pop(0):]
+
 
     def insert_many(self, df: DataFrame):
         '''Insert DataFrame into each sub collections accordingly.'''
