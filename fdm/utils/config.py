@@ -1,4 +1,5 @@
 import json
+from pymongo import MongoClient
 
 
 def get_config():
@@ -8,3 +9,4 @@ def get_config():
 
 
 config = get_config()
+client = MongoClient(config["mongodb"]['address'], config["mongodb"]['port'])

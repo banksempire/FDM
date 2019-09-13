@@ -15,6 +15,8 @@ from .feeders import rebuilder, updater
 
 
 class _TushareCollectionBase(_CollectionBase):
+    method_name = 'blank'
+
     def __init__(self, col: Collection, setting: dict):
         super().__init__(col, setting)
 
@@ -64,54 +66,40 @@ class _TushareCollectionBase(_CollectionBase):
             sleep(0.6)
         return 0
 
+    def rebuild(self, buildindex=False):
+        self._rebuild(rebuilder(self.method_name))
+        if buildindex:
+            self.interface.create_indexs(
+                [self.interface.date_name, self.interface.code_name])
+        return 0
+
+    def update(self):
+        self._update(updater(self.method_name))
+        return 0
+
 
 class Tushare(_DbBase):
-    def __init__(self, client: MongoClient, settingname='tushare'):
-        super().__init__(client, settingname)
 
     def daily_price(self):
-        return self._inti_col(DailyPrice, 'daily')
+        return self._inti_col(DailyPrice)
 
     def daily_basic(self):
-        return self._inti_col(DailyBasic, 'dailyBasic')
+        return self._inti_col(DailyBasic)
 
     def daily_adj(self):
-        return self._inti_col(DailyAdjFactor, 'dailyAdjFactor')
+        return self._inti_col(DailyAdjFactor)
 
 
 class DailyBasic(_TushareCollectionBase):
     method_name = 'daily_basic'
 
-    def rebuild(self):
-        self._rebuild(rebuilder(self.method_name))
-        self.interface.create_indexs(
-            [self.interface.date_name, self.interface.code_name])
-        return 0
-
-    def update(self):
-        self._update(updater(self.method_name))
-        return 0
+    def rebuild(self, buildindex=True):
+        return super().rebuild(buildindex)
 
 
 class DailyPrice(_TushareCollectionBase):
     method_name = 'daily'
 
-    def rebuild(self):
-        self._rebuild(rebuilder(self.method_name))
-        return 0
-
-    def update(self):
-        self._update(updater(self.method_name))
-        return 0
-
 
 class DailyAdjFactor(_TushareCollectionBase):
     method_name = 'adj_factor'
-
-    def rebuild(self):
-        self._rebuild(rebuilder(self.method_name))
-        return 0
-
-    def update(self):
-        self._update(updater(self.method_name))
-        return 0

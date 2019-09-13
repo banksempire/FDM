@@ -3,15 +3,15 @@
         "address": "192.168.56.1",
         "port": 27017
     },
-    "tushare": {
+    "Tushare": {
         "DBSetting": {
             "dbName": "tushareCache",
             "date_name": "trade_date",
             "code_name": "ts_code",
             "colSetting": {
-                "daily": "dailyPricing",
-                "dailyBasic": "dailyBasic",
-                "dailyAdjFactor": "dailyAdjFactor"
+                "DailyPrice": "dailyPricing",
+                "DailyBasic": "dailyBasic",
+                "DailyAdjFactor": "dailyAdjFactor"
             }
         }
     },

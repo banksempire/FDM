@@ -9,6 +9,7 @@ from pandas import DataFrame
 import pandas as pd
 import numpy as np
 
+from fdm.utils import client, config
 
 class ColInterface:
     '''This interface standardized mongodb collection-level operation over
@@ -424,9 +425,9 @@ class _CollectionBase:
 
 
 class _DbBase:
-    def __init__(self, client: MongoClient, settingname: str):
-        with open('setting.json', 'r', encoding='utf-8') as file:
-            self.setting = json.loads(file.read())[settingname]
+    def __init__(self):
+        class_name = self.__class__.__name__
+        self.setting = config[class_name]
         dbName = self.setting['DBSetting']['dbName']
         self.db = client[dbName]
     
@@ -442,8 +443,9 @@ class _DbBase:
         print(self.setting)
         return 0
 
-    def _inti_col(self, colclass, setting_key: str):
-        colName = self.setting['DBSetting']['colSetting'][setting_key]
+    def _inti_col(self, colclass):
+        class_name = colclass.__name__
+        colName = self.setting['DBSetting']['colSetting'][class_name]
         col = self.db[colName]
         return colclass(col, self.setting['DBSetting'])
 
