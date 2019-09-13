@@ -1,4 +1,4 @@
-import json
+'''import json
 from datetime import datetime
 
 import pymongo
@@ -16,4 +16,8 @@ client = MongoClient(dbSetting['address'], dbSetting['port'])
 db = fdm.Tushare(client)['daily_basic']
 db.update()
 
-client.close()
+client.close()'''
+
+from fdm.utils import config
+
+print(config)

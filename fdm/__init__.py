@@ -3,4 +3,4 @@ from .datasources import (
     CleanData,
     TempDB
 )
-import fdm.utilities
+import fdm.utils

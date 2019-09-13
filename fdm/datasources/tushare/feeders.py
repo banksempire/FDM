@@ -1,7 +1,7 @@
 import pandas as pd
 from pandas import DataFrame
 
-from fdm.utilities.decorators import retry
+from fdm.utils.decorators import retry
 
 
 def rebuilder(method, max_retry=10):
