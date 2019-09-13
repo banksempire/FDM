@@ -15,13 +15,13 @@
             }
         }
     },
-    "cleandata": {
+    "CleanData": {
         "DBSetting": {
             "dbName": "cleanData",
             "date_name": "date",
             "code_name": "code",
             "colSetting": {
-                "price": "price"
+                "Price": "price"
             }
         }
     },
