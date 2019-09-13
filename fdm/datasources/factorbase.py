@@ -14,12 +14,6 @@ class Factors(_DbBase):
     def __init__(self, client: MongoClient, settingname='factorbase'):
         super().__init__(client, settingname)
 
-    def __getitem__(self, key: str):
-        keyring = {
-            'size': self.size,
-        }
-        return keyring[key]()
-
     def size(self):
         return self._inti_col(Size, 'size')
 

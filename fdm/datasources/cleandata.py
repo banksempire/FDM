@@ -17,12 +17,6 @@ class CleanData(_DbBase):
     def __init__(self, client: MongoClient, settingname='cleandata'):
         super().__init__(client, settingname)
 
-    def __getitem__(self, key) -> _CollectionBase:
-        keyring = {
-            'price': self.price,
-        }
-        return keyring[key]()
-
     def price(self):
         return self._inti_col(Price, 'price')
 

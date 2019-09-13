@@ -70,14 +70,6 @@ class Tushare(_DbBase):
     def __init__(self, client: MongoClient, settingname='tushare'):
         super().__init__(client, settingname)
 
-    def __getitem__(self, key) -> _CollectionBase:
-        keyring = {
-            'daily': self.daily_price,
-            'dailyBasic': self.daily_basic,
-            'dailyAdjFactor': self.daily_adj
-        }
-        return keyring[key]()
-
     def daily_price(self):
         return self._inti_col(DailyPrice, 'daily')
 

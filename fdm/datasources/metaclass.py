@@ -428,9 +428,11 @@ class _DbBase:
             self.setting = json.loads(file.read())[settingname]
         dbName = self.setting['DBSetting']['dbName']
         self.db = client[dbName]
-
+    
     def __getitem__(self, key) -> _CollectionBase:
-        raise NotImplementedError
+        s = '{key} cannot be found in object {o}'.format(
+            key=key, o=self.__class__.__name__)
+        return getattr(self, key, s)()
 
     def list_collection_names(self) -> list:
         return self.db.list_collection_names()
