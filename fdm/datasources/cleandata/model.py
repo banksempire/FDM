@@ -2,9 +2,6 @@ from datetime import timedelta
 from datetime import datetime
 
 import pandas as pd
-from pandas import DataFrame
-
-from pymongo import MongoClient
 
 from fdm.datasources.metaclass import _CollectionBase, _DbBase
 import fdm

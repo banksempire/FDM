@@ -5,8 +5,6 @@ from datetime import datetime
 import pandas as pd
 from pandas import DataFrame
 
-from pymongo import MongoClient
-from pymongo.collection import Collection
 
 import tushare as ts
 
@@ -16,9 +14,6 @@ from .feeders import rebuilder, updater
 
 class _TushareCollectionBase(_CollectionBase):
     method_name = 'blank'
-
-    def __init__(self, col: Collection, setting: dict):
-        super().__init__(col, setting)
 
     def _rebuild(self, download_function):
         # Drop all data in collection
