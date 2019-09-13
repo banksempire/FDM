@@ -287,20 +287,21 @@ class ColInterface:
 
     def insert_many(self, df: DataFrame):
         '''Insert DataFrame into each sub collections accordingly.'''
-        date_name = self.date_name
-        df[date_name] = pd.to_datetime(df[date_name])
-        df = df.sort_values(date_name)
-        mindate = min(df[date_name])
-        maxdate = max(df[date_name])
+        if not df.empty :
+            date_name = self.date_name
+            df[date_name] = pd.to_datetime(df[date_name])
+            df = df.sort_values(date_name)
+            mindate = min(df[date_name])
+            maxdate = max(df[date_name])
 
-        for year in range(mindate.year, maxdate.year+1):
-            idf = df[(df[date_name] <= datetime(year, 12, 31)) &
-                     (df[date_name] >= datetime(year, 1, 1))]
-            record = idf.to_dict('record')
-            if len(record) != 0:
-                self.col[str(year)].insert_many(record)
+            for year in range(mindate.year, maxdate.year+1):
+                idf = df[(df[date_name] <= datetime(year, 12, 31)) &
+                        (df[date_name] >= datetime(year, 1, 1))]
+                record = idf.to_dict('record')
+                if len(record) != 0:
+                    self.col[str(year)].insert_many(record)
 
-        return 0
+            return 0
 
     def delete_by_date(self, date: datetime):
         '''Delete record given date'''
@@ -429,7 +430,7 @@ class _DbBase:
         dbName = self.setting['DBSetting']['dbName']
         self.db = client[dbName]
     
-    def __getitem__(self, key) -> _CollectionBase:
+    def __getitem__(self, key):
         s = '{key} cannot be found in object {o}'.format(
             key=key, o=self.__class__.__name__)
         return getattr(self, key, s)()
