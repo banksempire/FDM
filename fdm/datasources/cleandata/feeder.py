@@ -2,10 +2,6 @@ from pandas import DataFrame
 
 import fdm
 
-feeder_funcs = {
-    'tushare': _tushare
-}
-
 
 def _tushare(startdate, enddate) -> DataFrame:
     # Get raw pricing data
@@ -38,3 +34,8 @@ def _tushare(startdate, enddate) -> DataFrame:
     df.rename(columns={'ts_code': 'code',
                        'trade_date': 'date'}, inplace=True)
     return df
+
+
+feeder_funcs = {
+    'tushare': _tushare
+}

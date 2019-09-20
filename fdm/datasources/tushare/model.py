@@ -9,7 +9,7 @@ from pandas import DataFrame
 import tushare as ts
 
 from fdm.datasources.metaclass import _CollectionBase, _DbBase
-from .feeders import rebuilder, updater
+from .feeder import rebuilder, updater
 
 
 class _TushareCollectionBase(_CollectionBase):

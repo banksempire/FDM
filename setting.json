@@ -25,6 +25,16 @@
             }
         }
     },
+    "Wind": {
+        "DBSetting": {
+            "dbName": "wind",
+            "date_name": "date",
+            "code_name": "code",
+            "colSetting": {
+                "EDB": "EDB"
+            }
+        }
+    },
     "factorbase": {
         "DBSetting": {
             "dbName": "factorBase",

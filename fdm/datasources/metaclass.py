@@ -108,7 +108,7 @@ class ColInterface:
                     subcol = self.col[str(year)]
                     q_params[self.date_name] = {
                         '$gte': max(start, datetime(year, 1, 1)),
-                        '%lte': min(end, datetime(year, 12, 31))
+                        '$lte': min(end, datetime(year, 12, 31))
                     }
                     cursor = subcol.find(q_params, projection=fields)
                     df = DataFrame(cursor)
@@ -296,7 +296,7 @@ class ColInterface:
             maxdate = max(df[date_name])
 
             for year in range(mindate.year, maxdate.year+1):
-                idf = df[(df[date_name] <= datetime(year, 12, 31)) &
+                idf = df[(df[date_name]<= datetime(year, 12, 31)) &
                         (df[date_name] >= datetime(year, 1, 1))]
                 record = idf.to_dict('record')
                 if len(record) != 0:
@@ -323,6 +323,13 @@ class ColInterface:
         doc = self.col[subcols[-1]].find(projection=[self.date_name]).sort(
             [(self.date_name, -1)]).limit(1)
         return doc[0][self.date_name]
+
+    def lastdate_by_code(self, code, default = datetime(1980,1,1)) -> datetime:
+        '''Get max(date) of a code, if not found return default.'''
+        try:
+            return self.get_nearest_date([code])
+        except:
+            return default
 
     def get_nearest_date(self, code_list, date=datetime.now(), latest=True) -> datetime:
         '''Return the latest/earliest record given code and date'''

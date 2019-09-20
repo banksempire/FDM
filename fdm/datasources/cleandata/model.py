@@ -5,7 +5,7 @@ import pandas as pd
 
 from fdm.datasources.metaclass import _CollectionBase, _DbBase
 import fdm
-from .feeders import feeder_funcs
+from .feeder import feeder_funcs
 
 
 class CleanData(_DbBase):
