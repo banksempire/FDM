@@ -1,2 +1,7 @@
 from .config import config
-from .client import client
+
+
+def change_client(address, port):
+    from . import client
+    from pymongo import MongoClient
+    client.client = MongoClient(address, port)
