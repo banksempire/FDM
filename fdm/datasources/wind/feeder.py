@@ -3,11 +3,10 @@ from datetime import datetime
 from pandas import DataFrame
 import pandas as pd
 
-from WindPy import w
-
 
 def edb(codes, start, end) -> DataFrame:
     '''Get edb data from wind'''
+    from WindPy import w
     w.start()
     # Unpack params
     wind_codes = codes if isinstance(codes, str) else ','.join(codes)

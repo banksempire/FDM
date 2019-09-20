@@ -6,21 +6,20 @@ import pandas as pd
 from pandas import DataFrame
 
 
-import tushare as ts
-
 from fdm.datasources.metaclass import _CollectionBase, _DbBase
 from .feeder import rebuilder, updater
 
 
 class _TushareCollectionBase(_CollectionBase):
     method_name = 'blank'
+    import tushare as ts
 
     def _rebuild(self, download_function):
         # Drop all data in collection
         self.interface.drop()
         print('{0} droped'.format(self.interface.full_name()))
         # Inititalize data source
-        pro = ts.pro_api()
+        pro = self.ts.pro_api()
         # Get stock list
         stock_list = DataFrame()
         for status in "LDP":
@@ -44,7 +43,7 @@ class _TushareCollectionBase(_CollectionBase):
 
     def _update(self, download_function):
         # Inititalize data source
-        pro = ts.pro_api()
+        pro = self.ts.pro_api()
         # Get last date in DB
         lastdate = self.interface.lastdate()
         # Generate date range business day only
