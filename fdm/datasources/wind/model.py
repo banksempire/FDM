@@ -25,7 +25,6 @@ class EDB(_CollectionBase):
         for code, startdate in ((c, self.interface.lastdate_by_code(c)+timedelta(1))
                                 for c in wind_codes):
             df = edb(code, startdate, enddate)
-            print(df)
             self.interface.insert_many(df)
 
     def query(self, code_list_or_str=None,
