@@ -432,7 +432,7 @@ class _CollectionBase:
 
 
 class _DbBase:
-    def __init__(self):
+    def __init__(self, client:MongoClient = client):
         class_name = self.__class__.__name__
         self.setting = config[class_name]
         dbName = self.setting['DBSetting']['dbName']

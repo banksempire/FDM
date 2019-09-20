@@ -1,2 +1,2 @@
-from .config import (config,
-                     client)
+from .config import config
+from .client import client
