@@ -45,7 +45,7 @@
             }
         }
     },
-    "tempdb": {
+    "TempDB": {
         "DBSetting": {
             "dbName": "tempDB",
             "date_name": "date",
