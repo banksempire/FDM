@@ -47,3 +47,18 @@ class EDB(_CollectionBase):
                                    fields,
                                    fillna)
         return res
+
+
+class WSD(_CollectionBase):
+    def udpate(self, codes=None, enddate: datetime = datetime.now()):
+        pass
+
+    def query(self, code_list_or_str=None,
+              date=None,
+              startdate: datetime = None,
+              enddate: datetime = None,
+              freq='D',
+              fields: list = None,
+              fillna=None,
+              autoupdate=True):
+        pass
