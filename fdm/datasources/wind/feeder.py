@@ -17,6 +17,9 @@ def edb(codes, start, end) -> DataFrame:
     # Download data
     data = w.edb(wind_codes, startdate, enddate,
                  "Fill=Previous")
+    if data.ErrorCode != 0:
+        print(data)
+        raise ValueError('Wind request failed!')
     df = DataFrame(data.Data, columns=data.Times, index=data.Codes).T
     # Transform data
     df = df.unstack().reset_index()
