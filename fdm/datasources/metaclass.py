@@ -37,7 +37,7 @@ class ColInterface:
         res = []
         for name in db.list_collection_names():
             sname = name.split('.')
-            if sname[0] == self.col.name and len(sname) >= 2 and sname.isnumeric():
+            if sname[0] == self.col.name and len(sname) >= 2 and sname[1].isnumeric():
                 res.append(sname[1])
         res.sort(reverse=not ascending)
         return res
@@ -472,11 +472,12 @@ class DynColInterface(ColInterface):
 
         col_status.create_index(self.code_name)
 
-    def update_field_status(self, code:str,
-                            field :str,
+    def update_field_status(self, code: str,
+                            field: str,
                             startdate=None,
                             enddate=None):
         pass
+
 
 class _CollectionBase:
     '''A simple warper class of ColInterface'''
