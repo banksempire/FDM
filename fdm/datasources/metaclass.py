@@ -419,7 +419,7 @@ class DynColInterface(ColInterface):
         self.fields = self.get_fields()
 
     # ----------------------------------------
-    # Field info management
+    # FieldStore info management
     # ----------------------------------------
     def reg_new_field(self, field_name: str):
         fs = self.col['FieldStore']
@@ -435,8 +435,8 @@ class DynColInterface(ColInterface):
 
     def get_field_record_date(self, code: str,
                               field: str,
-                              default: datetime = datetime(1980, 1, 1),
-                              last=True) -> datetime:
+                              default=None,
+                              last=True) -> Optional[datetime]:
         subcols = self.list_subcollections(not last)
         order = -1 if last else 1
         filter_doc = {
@@ -450,7 +450,33 @@ class DynColInterface(ColInterface):
             if len(l) > 0:
                 return l[0][self.date_name]
         return default
+    # ----------------------------------------
+    # FieldStatus info management
+    # ----------------------------------------
 
+    def rebuild_field_status(self):
+        col_status = self.col['FieldStatus']
+        col_status.drop()
+
+        fields = self.get_fields()
+        codes = self.distinct(self.code_name)
+
+        for code in codes:
+            payload = {}
+            for field in fields:
+                startdate = self.get_field_record_date(code, field, last=False)
+                enddate = self.get_field_record_date(code, field, last=True)
+                if not startdate is None and not enddate is None:
+                    payload[field] = [startdate, enddate]
+            col_status.insert_one(payload)
+
+        col_status.create_index(self.code_name)
+
+    def update_field_status(self, code:str,
+                            field :str,
+                            startdate=None,
+                            enddate=None):
+        pass
 
 class _CollectionBase:
     '''A simple warper class of ColInterface'''
