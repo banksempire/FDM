@@ -11,6 +11,7 @@ import numpy as np
 
 from fdm.utils import client, config
 
+
 class ColInterface:
     '''This interface standardized mongodb collection-level operation over
     a series of sub collections.
@@ -26,11 +27,11 @@ class ColInterface:
         else:
             self.code_name = setting['code_name']
             self.date_name = setting['date_name']
-    
-    #----------------------------------------
-    # Collection info and 
-    #----------------------------------------
-    def list_subcollection_names(self,ascending:bool=True) -> list:
+
+    # ----------------------------------------
+    # Collection info and
+    # ----------------------------------------
+    def list_subcollection_names(self, ascending: bool = True) -> list:
         '''Return all name of all subcollections.'''
         db = self.col.database
         res = []
@@ -41,7 +42,7 @@ class ColInterface:
         res.sort(reverse=not ascending)
         return res
 
-    def list_subcollections(self, ascending:bool=True):
+    def list_subcollections(self, ascending: bool = True):
         '''Return all subcolletions.'''
         subcols = self.list_subcollection_names(ascending)
         res = []
@@ -65,9 +66,9 @@ class ColInterface:
         '''Return MonogClient.'''
         return self.col.database.client
 
-    #----------------------------------------
+    # ----------------------------------------
     # CRUD
-    #----------------------------------------
+    # ----------------------------------------
     def query(self, code_list_or_str=None,
               date=None,
               startdate: datetime = None,
@@ -165,14 +166,14 @@ class ColInterface:
                         isna[isna == True]
                         res = isna[isna == True].index
                         return set(res)
-                    
+
                     pdf = df.pivot(index=date_name, columns=code_name,
                                    values=code_name)
                     pdf = pdf.reindex(pd.date_range(
                         startdate, enddate, freq=freq))
-                    for date ,value in pdf.iterrows():
+                    for date, value in pdf.iterrows():
                         na_list = _(value)
-                        if len(na_list) !=0:
+                        if len(na_list) != 0:
                             yield date, na_list
                 else:
                     if code_list_or_str is None:
@@ -279,10 +280,12 @@ class ColInterface:
 
         result = DataFrame()
         records_count = []
+
         def gen_start_end(date):
-            start = pd.date_range(end = date,periods=2,freq = freq)[0]+timedelta(1)
-            return start.to_pydatetime(),date.to_pydatetime()
-        
+            start = pd.date_range(end=date, periods=2, freq=freq)[
+                0]+timedelta(1)
+            return start.to_pydatetime(), date.to_pydatetime()
+
         for start, end in (gen_start_end(date) for date in drange):
             df = self.query(code_list_or_str,
                             startdate=start,
@@ -301,7 +304,7 @@ class ColInterface:
 
     def insert_many(self, df: DataFrame):
         '''Insert DataFrame into each sub collections accordingly.'''
-        if not df.empty :
+        if not df.empty:
             date_name = self.date_name
             df[date_name] = pd.to_datetime(df[date_name])
             df = df.sort_values(date_name)
@@ -309,8 +312,8 @@ class ColInterface:
             maxdate = max(df[date_name])
 
             for year in range(mindate.year, maxdate.year+1):
-                idf = df[(df[date_name]<= datetime(year, 12, 31)) &
-                        (df[date_name] >= datetime(year, 1, 1))]
+                idf = df[(df[date_name] <= datetime(year, 12, 31)) &
+                         (df[date_name] >= datetime(year, 1, 1))]
                 record = idf.to_dict('record')
                 if len(record) != 0:
                     self.col[str(year)].insert_many(record)
@@ -321,10 +324,10 @@ class ColInterface:
         '''Delete record given date'''
         col: Collection = self.col[str(date.year)]
         col.delete_many({self.date_name: date})
-    
-    #----------------------------------------
+
+    # ----------------------------------------
     # Collection level management
-    #----------------------------------------
+    # ----------------------------------------
     def drop(self):
         '''Drop all sub collections.'''
         self.col.drop()
@@ -335,7 +338,8 @@ class ColInterface:
 
     def create_indexs(self, indexes: list = None):
         '''Create index for all sub collections.'''
-        indexes = [self.code_name,self.date_name] if indexes is None else indexes
+        indexes = [self.code_name,
+                   self.date_name] if indexes is None else indexes
         if self.count() != 0:
             for subcol in self.list_subcollections():
                 for index in indexes:
@@ -343,9 +347,9 @@ class ColInterface:
             return 0
         return 1
 
-    #----------------------------------------
+    # ----------------------------------------
     # Qurey date
-    #----------------------------------------
+    # ----------------------------------------
     def lastdate(self) -> datetime:
         '''Return the max(date) in all sub collections.'''
         subcols = self.list_subcollection_names()
@@ -353,7 +357,7 @@ class ColInterface:
             [(self.date_name, -1)]).limit(1)
         return doc[0][self.date_name]
 
-    def lastdate_by_code(self, code, default = datetime(1980,1,1)) -> datetime:
+    def lastdate_by_code(self, code, default=datetime(1980, 1, 1)) -> datetime:
         '''Get max(date) of a code, if not found return default.'''
         try:
             return self.get_nearest_date([code])
@@ -388,10 +392,10 @@ class ColInterface:
         doc = self.col[subcols[0]].find(projection=[self.date_name]).sort(
             [(self.date_name, 1)]).limit(1)
         return doc[0][self.date_name]
-    
-    #----------------------------------------
+
+    # ----------------------------------------
     # Qurey codes
-    #----------------------------------------
+    # ----------------------------------------
     def distinct(self, key: str) -> list:
         '''Return list of distinct value key.'''
         res: set = set()
@@ -406,16 +410,18 @@ class ColInterface:
             res = res.union(subcol.distinct(self.code_name))
         return res
 
+
 class DynColInterface(ColInterface):
     '''ColInterface that deal with dynamic fields.'''
+
     def __init__(self, col: Collection, setting: dict = None):
-        super().__init__(col,setting)
+        super().__init__(col, setting)
         self.fields = self.get_fields()
-    
-    #----------------------------------------
+
+    # ----------------------------------------
     # Field info management
-    #----------------------------------------
-    def reg_new_field(self, field_name:str):
+    # ----------------------------------------
+    def reg_new_field(self, field_name: str):
         fs = self.col['FieldStore']
         if not field_name in self.fields:
             fs.insert({'field': field_name})
@@ -423,27 +429,28 @@ class DynColInterface(ColInterface):
         if len(self.fields) == 1:
             fs.create_index('field')
 
-    def get_fields(self) ->set:
+    def get_fields(self) -> set:
         fs = self.col['FieldStore']
         return set(fs.distinct('field'))
 
     def get_field_record_date(self, code: str,
-                              field:str,
-                              default:datetime = datetime(1980,1,1),
-                              last=True)->datetime: 
+                              field: str,
+                              default: datetime = datetime(1980, 1, 1),
+                              last=True) -> datetime:
         subcols = self.list_subcollections(not last)
         order = -1 if last else 1
         filter_doc = {
             self.code_name: code,
-            field:{'$exists':True}
+            field: {'$exists': True}
         }
         for subcol in subcols:
-            cursor = subcol.find(filter_doc,[self.date_name])\
+            cursor = subcol.find(filter_doc, [self.date_name])\
                 .sort([(self.date_name, order)]).limit(1)
             l = list(cursor)
-            if len(l) >0 :
+            if len(l) > 0:
                 return l[0][self.date_name]
         return default
+
 
 class _CollectionBase:
     '''A simple warper class of ColInterface'''
@@ -485,12 +492,12 @@ class _CollectionBase:
 
 
 class _DbBase:
-    def __init__(self, client:MongoClient = client.client):
+    def __init__(self, client: MongoClient = client.client):
         class_name = self.__class__.__name__
         self.setting = config[class_name]
         dbName = self.setting['DBSetting']['dbName']
         self.db = client[dbName]
-    
+
     def __getitem__(self, key):
         s = '{key} cannot be found in object {o}'.format(
             key=key, o=self.__class__.__name__)
