@@ -26,9 +26,10 @@ class ColInterface:
         else:
             self.code_name = setting['code_name']
             self.date_name = setting['date_name']
+        self.fields = self.get_fields()
     
     #----------------------------------------
-    # Sub-collection info
+    # Collection info and 
     #----------------------------------------
     def list_subcollection_names(self) -> list:
         '''Return all name of all subcollections.'''
@@ -36,7 +37,7 @@ class ColInterface:
         res = []
         for name in db.list_collection_names():
             sname = name.split('.')
-            if sname[0] == self.col.name and len(sname) >= 2:
+            if sname[0] == self.col.name and len(sname) >= 2 and sname.isnumeric():
                 res.append(sname[1])
         res.sort()
         return res
@@ -64,6 +65,21 @@ class ColInterface:
     def get_client(self) -> MongoClient:
         '''Return MonogClient.'''
         return self.col.database.client
+
+    #----------------------------------------
+    # Field info management
+    #----------------------------------------
+    def reg_new_field(self, field_name:str):
+        fs = self.col['FieldStore']
+        if not field_name in self.fields:
+            fs.insert({'field': field_name})
+        self.fields = self.get_fields()
+        if len(self.fields) == 1:
+            fs.create_index('field')
+
+    def get_fields(self) ->set:
+        fs = self.col['FieldStore']
+        return set(fs.distinct('field'))
 
     #----------------------------------------
     # CRUD
@@ -333,8 +349,9 @@ class ColInterface:
             self.col[subcol].drop()
         return 0
 
-    def create_indexs(self, indexes: list):
+    def create_indexs(self, indexes: list = None):
         '''Create index for all sub collections.'''
+        indexes = [self.code_name,self.date_name] if indexes is None else indexes
         if self.count() != 0:
             for subcol in self.list_subcollections():
                 for index in indexes:
