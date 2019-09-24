@@ -26,7 +26,10 @@ class ColInterface:
         else:
             self.code_name = setting['code_name']
             self.date_name = setting['date_name']
-
+    
+    #----------------------------------------
+    # Sub-collection info
+    #----------------------------------------
     def list_subcollection_names(self) -> list:
         '''Return all name of all subcollections.'''
         db = self.col.database
@@ -54,6 +57,17 @@ class ColInterface:
             n += self.col[subcol].estimated_document_count()
         return n
 
+    def full_name(self) -> str:
+        '''Return full name of the collection.'''
+        return self.col.full_name
+
+    def get_client(self) -> MongoClient:
+        '''Return MonogClient.'''
+        return self.col.database.client
+
+    #----------------------------------------
+    # CRUD
+    #----------------------------------------
     def query(self, code_list_or_str=None,
               date=None,
               startdate: datetime = None,
@@ -285,7 +299,6 @@ class ColInterface:
                 yield result
                 result = result.iloc[records_count.pop(0):]
 
-
     def insert_many(self, df: DataFrame):
         '''Insert DataFrame into each sub collections accordingly.'''
         if not df.empty :
@@ -308,7 +321,10 @@ class ColInterface:
         '''Delete record given date'''
         col: Collection = self.col[str(date.year)]
         col.delete_many({self.date_name: date})
-
+    
+    #----------------------------------------
+    # Collection level management
+    #----------------------------------------
     def drop(self):
         '''Drop all sub collections.'''
         self.col.drop()
@@ -317,6 +333,18 @@ class ColInterface:
             self.col[subcol].drop()
         return 0
 
+    def create_indexs(self, indexes: list):
+        '''Create index for all sub collections.'''
+        if self.count() != 0:
+            for subcol in self.list_subcollections():
+                for index in indexes:
+                    subcol.create_index(index)
+            return 0
+        return 1
+
+    #----------------------------------------
+    # Qurey date
+    #----------------------------------------
     def lastdate(self) -> datetime:
         '''Return the max(date) in all sub collections.'''
         subcols = self.list_subcollection_names()
@@ -359,20 +387,10 @@ class ColInterface:
         doc = self.col[subcols[0]].find(projection=[self.date_name]).sort(
             [(self.date_name, 1)]).limit(1)
         return doc[0][self.date_name]
-
-    def full_name(self) -> str:
-        '''Return full name of the collection.'''
-        return self.col.full_name
-
-    def create_indexs(self, indexes: list):
-        '''Create index for all sub collections.'''
-        if self.count() != 0:
-            for subcol in self.list_subcollections():
-                for index in indexes:
-                    subcol.create_index(index)
-            return 0
-        return 1
-
+    
+    #----------------------------------------
+    # Qurey codes
+    #----------------------------------------
     def distinct(self, key: str) -> list:
         '''Return list of distinct value key.'''
         res: set = set()
@@ -387,9 +405,6 @@ class ColInterface:
             res = res.union(subcol.distinct(self.code_name))
         return res
 
-    def get_client(self) -> MongoClient:
-        '''Return MonogClient.'''
-        return self.col.database.client
 
 
 class _CollectionBase:
