@@ -26,7 +26,6 @@ class ColInterface:
         else:
             self.code_name = setting['code_name']
             self.date_name = setting['date_name']
-        self.fields = self.get_fields()
     
     #----------------------------------------
     # Collection info and 
@@ -65,21 +64,6 @@ class ColInterface:
     def get_client(self) -> MongoClient:
         '''Return MonogClient.'''
         return self.col.database.client
-
-    #----------------------------------------
-    # Field info management
-    #----------------------------------------
-    def reg_new_field(self, field_name:str):
-        fs = self.col['FieldStore']
-        if not field_name in self.fields:
-            fs.insert({'field': field_name})
-        self.fields = self.get_fields()
-        if len(self.fields) == 1:
-            fs.create_index('field')
-
-    def get_fields(self) ->set:
-        fs = self.col['FieldStore']
-        return set(fs.distinct('field'))
 
     #----------------------------------------
     # CRUD
@@ -422,7 +406,29 @@ class ColInterface:
             res = res.union(subcol.distinct(self.code_name))
         return res
 
+class DynColInterface(ColInterface):
+    '''ColInterface that deal with dynamic fields.'''
+    def __init__(self, col: Collection, setting: dict = None):
+        super().__init__(col,setting)
+        self.fields = self.get_fields()
+    
+    #----------------------------------------
+    # Field info management
+    #----------------------------------------
+    def reg_new_field(self, field_name:str):
+        fs = self.col['FieldStore']
+        if not field_name in self.fields:
+            fs.insert({'field': field_name})
+        self.fields = self.get_fields()
+        if len(self.fields) == 1:
+            fs.create_index('field')
 
+    def get_fields(self) ->set:
+        fs = self.col['FieldStore']
+        return set(fs.distinct('field'))
+
+    def funcname(self, parameter_list):
+        pass
 
 class _CollectionBase:
     '''A simple warper class of ColInterface'''
