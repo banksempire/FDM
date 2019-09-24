@@ -30,7 +30,7 @@ class ColInterface:
     #----------------------------------------
     # Collection info and 
     #----------------------------------------
-    def list_subcollection_names(self) -> list:
+    def list_subcollection_names(self,ascending:bool=True) -> list:
         '''Return all name of all subcollections.'''
         db = self.col.database
         res = []
@@ -38,12 +38,12 @@ class ColInterface:
             sname = name.split('.')
             if sname[0] == self.col.name and len(sname) >= 2 and sname.isnumeric():
                 res.append(sname[1])
-        res.sort()
+        res.sort(reverse=not ascending)
         return res
 
-    def list_subcollections(self):
+    def list_subcollections(self, ascending:bool=True):
         '''Return all subcolletions.'''
-        subcols = self.list_subcollection_names()
+        subcols = self.list_subcollection_names(ascending)
         res = []
         for subcol in subcols:
             res.append(self.col[subcol])
@@ -427,8 +427,23 @@ class DynColInterface(ColInterface):
         fs = self.col['FieldStore']
         return set(fs.distinct('field'))
 
-    def funcname(self, parameter_list):
-        pass
+    def get_field_record_date(self, code: str,
+                              field:str,
+                              default:datetime = datetime(1980,1,1),
+                              last=True)->datetime: 
+        subcols = self.list_subcollections(not last)
+        order = -1 if last else 1
+        filter_doc = {
+            self.code_name: code,
+            field:{'$exists':True}
+        }
+        for subcol in subcols:
+            cursor = subcol.find(filter_doc,[self.date_name])\
+                .sort([(self.date_name, order)]).limit(1)
+            l = list(cursor)
+            if len(l) >0 :
+                return l[0][self.date_name]
+        return default
 
 class _CollectionBase:
     '''A simple warper class of ColInterface'''
