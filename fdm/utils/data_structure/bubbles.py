@@ -61,8 +61,7 @@ class Bubbles():
         self.bubbles = []
         for b in (self._convert(b) for b in bubbles):
             self.bubbles.append(b)
-        self._sort()
-        self._squeeze()
+        self._triple_kill()
 
     def __repr__(self):
         return 'Bubbles({})'.format(self.bubbles)
@@ -100,9 +99,7 @@ class Bubbles():
             pass
         finally:
             res.bubbles.append(r)
-            res._dropnone()
-            res._sort()
-            res._squeeze()
+            res._triple_kill()
             return res
 
     def to_list(self):
@@ -113,8 +110,7 @@ class Bubbles():
 
     def merge(self, bubble):
         self.bubbles.append(self._convert(bubble))
-        self._sort()
-        self._squeeze()
+        self._triple_kill()
         return self
 
     def carve(self, bubble):
@@ -126,10 +122,13 @@ class Bubbles():
             res.append(b2)
 
         self.bubbles = res
-        self._dropnone()
+        self._triple_kill()
+        return self
+
+    def _triple_kill(self):
+        self._drop_none()
         self._sort()
         self._squeeze()
-        return self
 
     def _squeeze(self):
         p = 0
@@ -137,15 +136,15 @@ class Bubbles():
         while p < count:
             for q, b_q in ((q, b_q) for q, b_q in enumerate(self.bubbles) if q > p):
                 self.bubbles[p], self.bubbles[q] = self.bubbles[p].merge(b_q)
-            self._dropnone()
+            self._drop_none()
             p += 1
             count = len(self.bubbles)
 
     def _sort(self):
         self.bubbles.sort(key=lambda x: x.mid)
 
-    def _dropnone(self):
-        self.bubbles = list(filter(lambda x: not x is None, self.bubbles))
+    def _drop_none(self):
+        self.bubbles = [b for b in self.bubbles if b is not None]
 
     def _convert(self, limits):
         return TimeBubble(min(limits), max(limits))
