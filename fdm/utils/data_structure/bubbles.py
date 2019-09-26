@@ -76,6 +76,35 @@ class Bubbles():
                 return True
         return False
 
+    @property
+    def min(self):
+        return self.bubbles[0].min
+
+    @property
+    def max(self):
+        return self.bubbles[-1].max
+
+    def gaps(self, bubble=None):
+        '''Return gaps between bubbles.'''
+        fullbubble = TimeBubble(self.min, self.max) \
+            if bubble is None else self._convert(bubble)
+
+        res = Bubbles()
+
+        try:
+            for b in self.bubbles:
+                l, r = fullbubble.carve(b)
+                fullbubble = r
+                res.bubbles.append(l)
+        except AttributeError:
+            pass
+        finally:
+            res.bubbles.append(r)
+            res._dropnone()
+            res._sort()
+            res._squeeze()
+            return res
+
     def to_list(self):
         res = []
         for b in self.bubbles:
