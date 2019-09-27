@@ -1,6 +1,8 @@
 from datetime import datetime
 from datetime import timedelta
 
+from copy import deepcopy
+
 
 class TimeBubble:
     def __init__(self, lower, upper, delta=timedelta(days=1)):
@@ -133,21 +135,21 @@ class Bubbles():
         return res
 
     def merge(self, bubble):
-        self._bubbles.append(self._convert(bubble))
-        self._triple_kill()
-        return self
+        res = Bubbles()
+        res._bubbles = deepcopy(self._bubbles)
+        res._bubbles.append(res._convert(bubble))
+        res._triple_kill()
+        return res
 
     def carve(self, bubble):
         b_carve = self._convert(bubble)
-        res = []
+        res_list = []
         for b in self._bubbles:
             b1, b2 = b.carve(b_carve)
-            res.append(b1)
-            res.append(b2)
+            res_list.append(b1)
+            res_list.append(b2)
 
-        self._bubbles = res
-        self._triple_kill()
-        return self
+        return Bubbles(res_list)
 
     def _triple_kill(self):
         self._drop_none()
@@ -174,5 +176,7 @@ class Bubbles():
     def _convert(self, value):
         if isinstance(value, TimeBubble):
             return value
+        elif value is None:
+            return None
         else:
             return TimeBubble(min(value), max(value))
