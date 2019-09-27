@@ -62,50 +62,50 @@ class TimeBubble:
 
 class Bubbles():
     def __init__(self, bubbles=[]):
-        self.bubbles = []
+        self._bubbles = []
         for b in (self._convert(b) for b in bubbles):
-            self.bubbles.append(b)
+            self._bubbles.append(b)
         self._triple_kill()
 
     def __repr__(self):
-        return 'Bubbles({})'.format(self.bubbles)
+        return 'Bubbles({})'.format(self._bubbles)
 
     def __str__(self):
-        return 'Bubbles({})'.format(str(self.bubbles))
+        return 'Bubbles({})'.format(str(self._bubbles))
 
     def __contains__(self, value):
-        for b in self.bubbles:
+        for b in self._bubbles:
             if value in b:
                 return True
         return False
 
     def __len__(self):
-        return len(self.bubbles)
+        return len(self._bubbles)
 
     def __getitem__(self, key):
-        return self.bubbles[key]
+        return self._bubbles[key]
 
     def __setitem__(self, key, value):
         if isinstance(value, TimeBubble):
-            self.bubbles[key] = value
+            self._bubbles[key] = value
         else:
             raise ValueError(
                 'Value {} not compatible with Bubbles.'.format(value))
         self._triple_kill()
 
     def __delitem__(self, key):
-        del self.bubbles[key]
+        del self._bubbles[key]
 
     def __iter__(self):
-        return iter(self.bubbles)
+        return iter(self._bubbles)
 
     @property
     def min(self):
-        return self.bubbles[0].min
+        return self._bubbles[0].min
 
     @property
     def max(self):
-        return self.bubbles[-1].max
+        return self._bubbles[-1].max
 
     def gaps(self, bubble=None):
         '''Return gaps between bubbles.'''
@@ -115,37 +115,37 @@ class Bubbles():
         res = Bubbles()
 
         try:
-            for b in self.bubbles:
+            for b in self._bubbles:
                 l, r = fullbubble.carve(b)
                 fullbubble = r
-                res.bubbles.append(l)
+                res._bubbles.append(l)
         except AttributeError:
             pass
         finally:
-            res.bubbles.append(r)
+            res._bubbles.append(r)
             res._triple_kill()
             return res
 
     def to_list(self):
         res = []
-        for b in self.bubbles:
+        for b in self._bubbles:
             res.append(b.to_list())
         return res
 
     def merge(self, bubble):
-        self.bubbles.append(self._convert(bubble))
+        self._bubbles.append(self._convert(bubble))
         self._triple_kill()
         return self
 
     def carve(self, bubble):
         b_carve = self._convert(bubble)
         res = []
-        for b in self.bubbles:
+        for b in self._bubbles:
             b1, b2 = b.carve(b_carve)
             res.append(b1)
             res.append(b2)
 
-        self.bubbles = res
+        self._bubbles = res
         self._triple_kill()
         return self
 
@@ -156,19 +156,20 @@ class Bubbles():
 
     def _squeeze(self):
         p = 0
-        count = len(self.bubbles)
+        count = len(self._bubbles)
         while p < count:
-            for q, b_q in ((q, b_q) for q, b_q in enumerate(self.bubbles) if q > p):
-                self.bubbles[p], self.bubbles[q] = self.bubbles[p].merge(b_q)
+            for q, b_q in ((q, b_q) for q, b_q in enumerate(self._bubbles) if q > p):
+                self._bubbles[p], self._bubbles[q] = self._bubbles[p].merge(
+                    b_q)
             self._drop_none()
             p += 1
-            count = len(self.bubbles)
+            count = len(self._bubbles)
 
     def _sort(self):
-        self.bubbles.sort(key=lambda x: x.mid)
+        self._bubbles.sort(key=lambda x: x.mid)
 
     def _drop_none(self):
-        self.bubbles = [b for b in self.bubbles if b is not None]
+        self._bubbles = [b for b in self._bubbles if b is not None]
 
     def _convert(self, limits):
         return TimeBubble(min(limits), max(limits))
