@@ -32,17 +32,17 @@ class TimeBubble:
         except:
             return self.min <= value.min <= value.max < self.max
 
-    def to_list(self):
+    def to_list(self) -> list:
         return [self.min, self.max]
 
-    def to_actualrange(self):
+    def to_actualrange(self) -> list:
         return [self.min, self.max-self.delta]
 
     def merge(self, bubble):
         if self._mergeable(bubble):
             mi = min(self.min, bubble.min)
             ma = max(self.max, bubble.max)
-            return self.__class__(mi, ma), None
+            return TimeBubble(mi, ma), None
         else:
             return self, bubble
 
@@ -50,10 +50,10 @@ class TimeBubble:
         if self._mergeable(bubble):
             l = self.min
             u = bubble.min
-            left = self.__class__(l, u) if l < u else None
+            left = TimeBubble(l, u) if l < u else None
             l = bubble.max
             u = self.max
-            right = self.__class__(l, u) if l < u else None
+            right = TimeBubble(l, u) if l < u else None
             return left, right
         else:
             return self, None
@@ -127,26 +127,26 @@ class Bubbles():
             res._triple_kill()
             return res
 
-    def to_list(self):
+    def to_list(self) -> list:
         res = []
         for b in self._bubbles:
             res.append(b.to_list())
         return res
 
-    def to_actualrange(self):
+    def to_actualrange(self) -> list:
         res = []
         for b in self:
             res.append(b.to_actualrange())
         return res
 
-    def merge(self, bubble):
+    def merge(self, bubble) -> Bubbles:
         res = Bubbles()
         res._bubbles = deepcopy(self._bubbles)
         res._bubbles.append(res._convert(bubble))
         res._triple_kill()
         return res
 
-    def carve(self, bubble):
+    def carve(self, bubble) -> Bubbles:
         b_carve = self._convert(bubble)
         res_list = []
         for b in self._bubbles:
