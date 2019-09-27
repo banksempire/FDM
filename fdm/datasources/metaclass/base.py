@@ -7,7 +7,7 @@ from pymongo.collection import Collection
 from pymongo import MongoClient
 
 from fdm.utils import client, config
-from .colinterface import ColInterface
+from .interface import ColInterface
 
 
 class _CollectionBase:
