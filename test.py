@@ -16,7 +16,7 @@ l = [[datetime(2000, 1, 1), datetime(2000, 2, 1)],
      ]
 
 b0 = Bubbles(l)
-bs = b0.carve([datetime(2000, 1, 2), datetime(2000, 2, 4)])
+bs = b0.gaps()
 
-print(b0)
-print(bs)
+print(b0.to_actualrange())
+print(bs.to_actualrange())

@@ -35,7 +35,7 @@ class TimeBubble:
     def to_list(self):
         return [self.min, self.max]
 
-    def to_timerange(self):
+    def to_actualrange(self):
         return [self.min, self.max-self.delta]
 
     def merge(self, bubble):
@@ -132,6 +132,12 @@ class Bubbles():
         res = []
         for b in self._bubbles:
             res.append(b.to_list())
+        return res
+
+    def to_actualrange(self):
+        res = []
+        for b in self:
+            res.append(b.to_actualrange())
         return res
 
     def merge(self, bubble):
