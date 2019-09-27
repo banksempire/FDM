@@ -10,13 +10,7 @@ from pymongo import MongoClient
 from .fieldstore import FieldStatus
 
 
-class ColInterface:
-    '''This interface standardized mongodb collection-level operation over
-    a series of sub collections.
-
-    Sub collections are splited according to year value of record's timestamp.
-    '''
-
+class ColInterfaceBase():
     def __init__(self, col: Collection, setting: dict = None):
         self.col = col
         if setting is None:
@@ -27,8 +21,9 @@ class ColInterface:
             self.date_name = setting['date_name']
 
     # ----------------------------------------
-    # Collection info and
+    # Collection info related
     # ----------------------------------------
+
     def list_subcollection_names(self, ascending: bool = True) -> list:
         '''Return all name of all subcollections.'''
         db = self.col.database
@@ -63,6 +58,14 @@ class ColInterface:
     def get_client(self) -> MongoClient:
         '''Return MonogClient.'''
         return self.col.database.client
+
+
+class ColInterface(ColInterfaceBase):
+    '''This interface standardized mongodb collection-level operation over
+    a series of sub collections.
+
+    Sub collections are splited according to year value of record's timestamp.
+    '''
 
     # ----------------------------------------
     # CRUD
@@ -409,7 +412,7 @@ class ColInterface:
         return res
 
 
-class DynColInterface(ColInterface):
+class DynColInterface(ColInterfaceBase):
     '''ColInterface that deal with dynamic fields.'''
 
     def __init__(self, col: Collection, setting: dict = None):
