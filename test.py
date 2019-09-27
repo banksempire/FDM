@@ -7,6 +7,7 @@ fs = FieldStatus(tdb)
 '''fs['abc', 'asdf2'] = 'test'
 print(fs['abc', 'asdf2'])'''
 
-del fs['abc', ['abc', 'cfd']]
+for i in fs:
+    print(i)
 
 client.close()

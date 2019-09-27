@@ -47,6 +47,10 @@ class FieldStatus():
         self.fields = FieldStore(col)
         self.col.create_index('code', unique=True)
 
+    def __iter__(self):
+        for i in self.col.find():
+            yield i
+
     def __getitem__(self, key):
         code, field = key
         r = self.col.find_one({'code': code}, [field])
@@ -57,6 +61,7 @@ class FieldStatus():
 
     def __setitem__(self, key, value: Bubbles):
         code, field = key
+        self.fields.append(field)
         if code in self.col.distinct('code'):
             r = self.col.update_one({'code': code},
                                     {'$set': {field: value.to_list()}})
