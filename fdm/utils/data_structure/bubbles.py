@@ -86,9 +86,9 @@ class Bubbles():
         return self._bubbles[key]
 
     def __setitem__(self, key, value):
-        if isinstance(value, TimeBubble):
-            self._bubbles[key] = value
-        else:
+        try:
+            self._bubbles[key] = self._convert(value)
+        except:
             raise ValueError(
                 'Value {} not compatible with Bubbles.'.format(value))
         self._triple_kill()
@@ -171,5 +171,8 @@ class Bubbles():
     def _drop_none(self):
         self._bubbles = [b for b in self._bubbles if b is not None]
 
-    def _convert(self, limits):
-        return TimeBubble(min(limits), max(limits))
+    def _convert(self, value):
+        if isinstance(value, TimeBubble):
+            return value
+        else:
+            return TimeBubble(min(value), max(value))
