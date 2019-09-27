@@ -10,6 +10,8 @@ class FieldManager():
 
 
 class FieldStore():
+    '''FieldStore keep track of all fields avaiable in a collection.'''
+
     def __init__(self, col: Collection):
         self.col: Collection = col['FieldStore']
         self.cache = self.get_fields()
@@ -17,6 +19,9 @@ class FieldStore():
 
     def __contains__(self, item):
         return item in self.cache
+
+    def __iter__(self):
+        return iter(self.cache)
 
     def append(self, field: str):
         if not field in self:
