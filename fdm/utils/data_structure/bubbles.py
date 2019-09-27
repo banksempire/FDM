@@ -115,7 +115,6 @@ class Bubbles():
             if bubble is None else self._convert(bubble)
 
         res = Bubbles()
-
         try:
             for b in self._bubbles:
                 l, r = fullbubble.carve(b)
@@ -124,7 +123,7 @@ class Bubbles():
         except AttributeError:
             pass
         finally:
-            res._bubbles.append(r)
+            res._bubbles.append(fullbubble)
             res._triple_kill()
             return res
 
