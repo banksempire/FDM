@@ -71,13 +71,33 @@ class Bubbles():
         return 'Bubbles({})'.format(self.bubbles)
 
     def __str__(self):
-        return self.__repr__()
+        return 'Bubbles({})'.format(str(self.bubbles))
 
     def __contains__(self, value):
         for b in self.bubbles:
             if value in b:
                 return True
         return False
+
+    def __len__(self):
+        return len(self.bubbles)
+
+    def __getitem__(self, key):
+        return self.bubbles[key]
+
+    def __setitem__(self, key, value):
+        if isinstance(value, TimeBubble):
+            self.bubbles[key] = value
+        else:
+            raise ValueError(
+                'Value {} not compatible with Bubbles.'.format(value))
+        self._triple_kill()
+
+    def __delitem__(self, key):
+        del self.bubbles[key]
+
+    def __iter__(self):
+        return iter(self.bubbles)
 
     @property
     def min(self):

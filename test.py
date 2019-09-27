@@ -10,9 +10,11 @@ print(data.pivot('date', 'code', 'value'))'''
 
 start = datetime.now()
 l = [[datetime(2000, 1, 1), datetime(2000, 2, 1)],
-     [datetime(2000, 3, 1), datetime(2000, 5, 1)],
+     [datetime(2000, 2, 2), datetime(2000, 5, 30)],
      [datetime(2000, 6, 1), datetime(2000, 12, 1)]
      ]
-print(Bubbles(l).gaps([datetime(2000, 1, 15), datetime(2000, 5, 15)]))
-end = datetime.now()
-print((end-start).total_seconds())
+
+bs = Bubbles(l)
+
+for b in bs:
+    print(b)
