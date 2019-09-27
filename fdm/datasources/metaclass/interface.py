@@ -418,3 +418,13 @@ class DynColInterface(ColInterfaceBase):
     def __init__(self, col: Collection, setting: dict = None):
         super().__init__(col, setting)
         self.fs = FieldStatus(col)
+
+    def query(self, code_list_or_str,
+              date: datetime,
+              startdate: datetime,
+              enddate: datetime,
+              fields: list,
+              fillna=None,
+              freq='B',
+              force_update=False):
+        pass
