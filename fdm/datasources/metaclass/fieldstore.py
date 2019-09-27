@@ -53,6 +53,7 @@ class FieldStatus():
 
     def __getitem__(self, key):
         code, field = key
+        self.fields.append(field)
         r = self.col.find_one({'code': code}, [field])
         if r is None:
             return Bubbles()
