@@ -3,7 +3,7 @@ from datetime import timedelta
 
 
 class TimeBubble:
-    def __init__(self, lower, upper):
+    def __init__(self, lower, upper, delta=timedelta(days=1)):
         if lower > upper:
             raise ValueError(
                 'Upper {} is less then lower {}.'.format(upper, lower))
@@ -11,6 +11,7 @@ class TimeBubble:
         self.min = lower
         self.mid = self.max.timestamp() + self.min.timestamp()
         self.leg = self.max.timestamp() - self.min.timestamp()
+        self.delta = delta
 
     def __repr__(self):
         start = self.min
@@ -21,16 +22,19 @@ class TimeBubble:
         fmt = '%Y-%m-%d'
         start = self.min.strftime(fmt)
         end = self.max.strftime(fmt)
-        return 'TimeBubble({}, {})'.format(start, end)
+        return '[{}, {})'.format(start, end)
 
     def __contains__(self, value):
         try:
-            return self.min <= value <= self.max
+            return self.min <= value < self.max
         except:
-            return self.min <= value.min < value.max <= self.max
+            return self.min <= value.min <= value.max < self.max
 
     def to_list(self):
         return [self.min, self.max]
+
+    def to_timerange(self):
+        return [self.min, self.max-self.delta]
 
     def merge(self, bubble):
         if self._mergeable(bubble):
@@ -43,9 +47,9 @@ class TimeBubble:
     def carve(self, bubble):
         if self._mergeable(bubble):
             l = self.min
-            u = bubble.min - timedelta(1)
+            u = bubble.min
             left = self.__class__(l, u) if l < u else None
-            l = bubble.max + timedelta(1)
+            l = bubble.max
             u = self.max
             right = self.__class__(l, u) if l < u else None
             return left, right
