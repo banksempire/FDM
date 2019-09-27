@@ -7,6 +7,8 @@ import pandas as pd
 from pymongo.collection import Collection
 from pymongo import MongoClient
 
+from .fieldstore import FieldStatus
+
 
 class ColInterface:
     '''This interface standardized mongodb collection-level operation over
@@ -412,68 +414,4 @@ class DynColInterface(ColInterface):
 
     def __init__(self, col: Collection, setting: dict = None):
         super().__init__(col, setting)
-        self.fields = self.get_fields()
-
-    # ----------------------------------------
-    # FieldStore info management
-    # ----------------------------------------
-    def reg_new_field(self, field_name: str):
-        fs = self.col['FieldStore']
-        if not field_name in self.fields:
-            fs.insert({'field': field_name})
-        self.fields = self.get_fields()
-        if len(self.fields) == 1:
-            fs.create_index('field')
-
-    def get_fields(self) -> set:
-        fs = self.col['FieldStore']
-        return set(fs.distinct('field'))
-
-    def get_field_record_date(self, code: str,
-                              field: str,
-                              default=None,
-                              last=True) -> Optional[datetime]:
-        subcols = self.list_subcollections(not last)
-        order = -1 if last else 1
-        filter_doc = {
-            self.code_name: code,
-            field: {'$exists': True}
-        }
-        for subcol in subcols:
-            cursor = subcol.find(filter_doc, [self.date_name])\
-                .sort([(self.date_name, order)]).limit(1)
-            l = list(cursor)
-            if len(l) > 0:
-                return l[0][self.date_name]
-        return default
-    # ----------------------------------------
-    # FieldStatus info management
-    # ----------------------------------------
-
-    def rebuild_field_status(self):
-        col_status = self.col['FieldStatus']
-        col_status.drop()
-
-        fields = self.get_fields()
-        codes = self.distinct(self.code_name)
-
-        for code in codes:
-            payload = {}
-            for field in fields:
-                startdate = self.get_field_record_date(code, field, last=False)
-                enddate = self.get_field_record_date(code, field, last=True)
-                if not startdate is None and not enddate is None:
-                    payload[field] = [startdate, enddate]
-            col_status.insert_one(payload)
-
-        col_status.create_index(self.code_name)
-
-    def get_field_status(self, code: str,
-                         field: str):
-        pass
-
-    def update_field_status(self, code: str,
-                            field: str,
-                            startdate=None,
-                            enddate=None):
-        pass
+        self.fs = FieldStatus(col)
