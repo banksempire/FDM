@@ -1,9 +1,12 @@
-from fdm.datasources.metaclass.fieldstore import FieldStore
+from fdm.datasources.metaclass.fieldstore import FieldStatus
 from fdm.utils.client import client
 
 tdb = client['test']['test']
-fs = FieldStore(tdb)
+fs = FieldStatus(tdb)
 
-for i in 'asdf':
-    fs.append(i)
+'''fs['abc', 'asdf2'] = 'test'
+print(fs['abc', 'asdf2'])'''
+
+del fs['abc', ['abc', 'cfd']]
+
 client.close()
