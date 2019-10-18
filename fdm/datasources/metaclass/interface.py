@@ -7,7 +7,7 @@ import pandas as pd
 from pymongo.collection import Collection
 from pymongo import MongoClient
 
-from .fieldstore import FieldStatus
+from .manager import Manager
 
 
 class ColInterfaceBase():
@@ -415,9 +415,10 @@ class ColInterface(ColInterfaceBase):
 class DynColInterface(ColInterfaceBase):
     '''ColInterface that deal with dynamic fields.'''
 
-    def __init__(self, col: Collection, setting: dict = None):
+    def __init__(self, col: Collection, feeder_func, setting: dict = None):
         super().__init__(col, setting)
-        self.fs = FieldStatus(col)
+        self.manager = Manager(col)
+        self.feeder_func = feeder_func
 
     def query(self, code_list_or_str,
               date: datetime,
@@ -427,4 +428,51 @@ class DynColInterface(ColInterfaceBase):
               fillna=None,
               freq='B',
               force_update=False):
-        pass
+        codes = self._convert_codes(code_list_or_str)
+        self.auto_update(
+            self.manager.solve_update_params(
+                codes, fields, startdate, enddate))
+        fields = self._ensure_fields(fields)
+
+    def auto_update(self, update_params):
+        for code, field, gap in update_params:
+            start = gap[0]
+            end = gap[1]
+            df: DataFrame = self.feeder_func(code, field, start, end)
+            self._insert_many(df, code, field, gap)
+        self.manager.log.flush()
+
+    def _convert_codes(self, code_list_or_str) -> list:
+        '''Convert codes to deal with multi type.'''
+        if isinstance(code_list_or_str, str):
+            return [code_list_or_str]
+        elif code_list_or_str is None:
+            raise KeyError('code_list_or_str cannot be None in dynamic db')
+        else:
+            return code_list_or_str
+
+    def _ensure_fields(self, fields) -> list:
+        '''Ensure fields contain date and code and remove duplicated value.'''
+        res = set(fields)
+        res.union({self.code_name, self.date_name})
+        return list(res)
+
+    def _insert_many(self, df: DataFrame, code, field, gap):
+        '''Insert DataFrame into each sub collections accordingly.'''
+        if not df.empty:
+            date_name = self.date_name
+            df[date_name] = pd.to_datetime(df[date_name])
+            df = df.sort_values(date_name)
+            mindate = min(df[date_name])
+            maxdate = max(df[date_name])
+
+            for year in range(mindate.year, maxdate.year+1):
+                idf = df[(df[date_name] <= datetime(year, 12, 31)) &
+                         (df[date_name] >= datetime(year, 1, 1))]
+                record = idf.to_dict('record')
+                if len(record) != 0:
+                    r = self.col[str(year)].insert_many(record)
+                    assert r.acknowledged
+                    self.manager.log.insert(
+                        code, field, gap, r)
+            return 0

@@ -1,13 +1,11 @@
-from fdm.datasources.metaclass.fieldstore import FieldStatus
+from datetime import datetime
+
+from fdm.datasources.metaclass.manager import Manager
 from fdm.utils.client import client
 
 tdb = client['test']['test']
-fs = FieldStatus(tdb)
+fm = Manager(tdb)
 
-'''fs['abc', 'asdf2'] = 'test'
-print(fs['abc', 'asdf2'])'''
-
-for i in fs:
+for i in fm.solve_update_params('abc', 'cde', datetime(2000, 1, 1), datetime(2012, 1, 1)):
     print(i)
-
 client.close()
