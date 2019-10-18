@@ -139,14 +139,14 @@ class Bubbles():
             res.append(b.to_actualrange())
         return res
 
-    def merge(self, bubble) -> Bubbles:
+    def merge(self, bubble):
         res = Bubbles()
         res._bubbles = deepcopy(self._bubbles)
         res._bubbles.append(res._convert(bubble))
         res._triple_kill()
         return res
 
-    def carve(self, bubble) -> Bubbles:
+    def carve(self, bubble):
         b_carve = self._convert(bubble)
         res_list = []
         for b in self._bubbles:
