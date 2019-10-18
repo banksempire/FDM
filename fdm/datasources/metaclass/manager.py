@@ -5,7 +5,7 @@ from pymongo.collection import Collection
 from fdm.utils.data_structure import Bubbles
 
 
-class FieldManager():
+class Manager():
     def __init__(self, col: Collection):
         self.status = FieldStatus(col)
 
@@ -13,13 +13,14 @@ class FieldManager():
         code, field = key
         self.status[code, field] = value
 
-    def solve_gap_date_ranges(self, code, fields, start, end):
+    def solve_update_params(self, code, fields, start, end):
         target_date_range = [start, end+timedelta(1)]
         for field in fields:
             has_date_range = self.status[code, field]
             date_gaps: list = has_date_range.gaps(
                 target_date_range).to_actualrange()
-            yield date_gaps
+            for gap in date_gaps:
+                yield code, field, gap
 
 
 class FieldStore():
