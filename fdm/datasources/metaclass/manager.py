@@ -8,19 +8,22 @@ from fdm.utils.data_structure import Bubbles
 class Manager():
     def __init__(self, col: Collection):
         self.status = FieldStatus(col)
+        self.log = Logger(col)
 
     def __setitem__(self, key, value):
         code, field = key
         self.status[code, field] = value
 
-    def solve_update_params(self, code, fields, start, end):
-        target_date_range = [start, end+timedelta(1)]
-        for field in fields:
-            has_date_range = self.status[code, field]
-            date_gaps: list = has_date_range.gaps(
-                target_date_range).to_actualrange()
-            for gap in date_gaps:
-                yield code, field, gap
+    def solve_update_params(self, codes, fields, start, end):
+        '''Solve params for data that need to be downloaded'''
+        target_date_range = [start, end + timedelta(1)]
+        for code in codes:
+            for field in fields:
+                has_date_range = self.status[code, field]
+                date_gaps: list = has_date_range.gaps(
+                    target_date_range).to_actualrange()
+                for gap in date_gaps:
+                    yield code, field, gap
 
 
 class FieldStore():
@@ -97,3 +100,26 @@ class FieldStatus():
             assert r.acknowledged
         else:
             raise KeyError('Code {} not found in database.'.format(code))
+
+
+class Logger():
+    def __init__(self, col: Collection):
+        self.col: Collection = col['Log']
+        self.cache: list = []
+
+    def insert(self, code, field, gap, result):
+        doc = {
+            'operation': 'insert',
+            'code': code,
+            'field': field,
+            'time': [gap[0], gap[1] + timedelta(1)],
+            '_ids': result.inserted_ids,
+            'valid': True
+        }
+        self.cache.append(doc)
+
+    def flush(self):
+        r = self.col.insert_many(self.cache)
+        assert r.acknowledged
+        del self.cache
+        self.cache = []
