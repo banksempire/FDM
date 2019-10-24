@@ -69,10 +69,10 @@ class FieldStatus():
         code, field = key
         self.fields.append(field)
         r = self.col.find_one({'code': code}, [field])
-        if r is None:
-            return Bubbles()
-        else:
+        try:
             return Bubbles(r[field])
+        except KeyError:
+            return Bubbles()
 
     def __setitem__(self, key, value: Bubbles):
         code, field = key
