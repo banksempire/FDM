@@ -109,6 +109,7 @@ class Logger():
 
     def insert(self, code, field, gap, result):
         doc = {
+            'timestamp': datetime.now(),
             'operation': 'insert',
             'code': code,
             'field': field,
