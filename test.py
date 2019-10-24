@@ -3,7 +3,7 @@ from datetime import datetime
 from fdm.datasources.metaclass.manager import Manager
 from fdm.utils.client import client
 
-from fdm.utils.tools import test_feeder_func
+from fdm.utils.test import test_feeder_func
 
 '''tdb = client['test']['test']
 fm = Manager(tdb)
