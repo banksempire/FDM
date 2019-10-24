@@ -1,15 +1,12 @@
 from datetime import datetime
 
-from fdm.datasources.metaclass.manager import Manager
 from fdm.utils.client import client
+from fdm.utils.test import test_feeder_func, test_config
 
-from fdm.utils.test import test_feeder_func
+from fdm.datasources.metaclass.interface import DynColInterface
 
-'''tdb = client['test']['test']
-fm = Manager(tdb)
+interface = DynColInterface(
+    client['test']['test'], test_feeder_func, test_config['Test']['DBSetting'])
+print(interface.full_name())
 
-for i in fm.solve_update_params('abc', 'cde', datetime(2000, 1, 1), datetime(2012, 1, 1)):
-    print(i)
-client.close()'''
-
-print(test_feeder_func('abc', 'cdb', datetime(2019, 1, 1), datetime(2019, 2, 1)))
+client.close()

@@ -14,3 +14,17 @@ def test_feeder_func(code, field, start, end):
             }
             yield pd.Series(doc)
     return pd.DataFrame(gen())
+
+
+test_config = {
+    "Test": {
+        "DBSetting": {
+            "dbName": "Test",
+            "date_name": "date",
+            "code_name": "code",
+            "colSetting": {
+                "Price": "price"
+            }
+        }
+    },
+}
