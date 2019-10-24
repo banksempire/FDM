@@ -107,20 +107,37 @@ class Logger():
         self.col: Collection = col['Log']
         self.cache: list = []
 
-    def insert(self, code, field, gap, result):
+    def insert(self, code, field, gap, date, result):
         doc = {
             'timestamp': datetime.now(),
             'operation': 'insert',
             'code': code,
             'field': field,
-            'time': [gap[0], gap[1] + timedelta(1)],
-            '_ids': result.inserted_ids,
+            'date': date,
+            'time_gap_start': gap[0],
+            'time_gap_end': gap[1] + timedelta(1),
+            '_ids': result.inserted_id,
+            'valid': True
+        }
+        self.cache.append(doc)
+
+    def update(self, code, field, gap, date, result):
+        doc = {
+            'timestamp': datetime.now(),
+            'operation': 'update',
+            'code': code,
+            'field': field,
+            'date': date,
+            'time_gap_start': gap[0],
+            'time_gap_end': gap[1] + timedelta(1),
+            '_ids': result.upserted_id,
             'valid': True
         }
         self.cache.append(doc)
 
     def flush(self):
-        r = self.col.insert_many(self.cache)
-        assert r.acknowledged
-        del self.cache
-        self.cache = []
+        if len(self.cache) != 0:
+            r = self.col.insert_many(self.cache)
+            assert r.acknowledged
+            del self.cache
+            self.cache = []
