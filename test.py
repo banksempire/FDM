@@ -7,6 +7,14 @@ from fdm.datasources.metaclass.interface import DynColInterface
 
 interface = DynColInterface(
     client['test']['test'], test_feeder_func, test_config['Test']['DBSetting'])
-print(interface.full_name())
+
+interface.query('abc', fields=['cde'], startdate=datetime(
+    2000, 1, 1), enddate=datetime(2005, 12, 31))
+
+interface.query('abc', fields=['cde'], startdate=datetime(
+    2008, 1, 1), enddate=datetime(2009, 12, 31))
+
+interface.query('abc', fields=['cde'], startdate=datetime(
+    1998, 1, 1), enddate=datetime(2019, 12, 31))
 
 client.close()

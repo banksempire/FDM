@@ -20,10 +20,9 @@ class Manager():
         for code in codes:
             for field in fields:
                 has_date_range = self.status[code, field]
-                date_gaps: list = has_date_range.gaps(
-                    target_date_range).to_actualrange()
-                for gap in date_gaps:
-                    yield code, field, gap
+                bubbles: Bubbles = has_date_range.gaps(
+                    target_date_range)
+                yield code, field, bubbles
 
 
 class FieldStore():
@@ -107,29 +106,28 @@ class Logger():
         self.col: Collection = col['Log']
         self.cache: list = []
 
-    def insert(self, code, field, gap, date, result):
+    def insert(self, code, field, bubble, ids):
         doc = {
             'timestamp': datetime.now(),
             'operation': 'insert',
             'code': code,
             'field': field,
-            'date': date,
-            'time_gap_start': gap[0],
-            'time_gap_end': gap[1] + timedelta(1),
-            '_ids': result.inserted_id,
+            'bubble_start': bubble.to_list()[0],
+            'bubble_end': bubble.to_list()[1],
+            '_ids': ids,
             'valid': True
         }
         self.cache.append(doc)
 
-    def update(self, code, field, gap, date, result):
+    def update(self, code, field, bubble, date, result):
         doc = {
             'timestamp': datetime.now(),
             'operation': 'update',
             'code': code,
             'field': field,
             'date': date,
-            'time_gap_start': gap[0],
-            'time_gap_end': gap[1] + timedelta(1),
+            'bubble_start': bubble.to_list()[0],
+            'bubble_end': bubble.to_list()[1],
             '_ids': result.upserted_id,
             'valid': True
         }

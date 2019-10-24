@@ -8,6 +8,7 @@ from pymongo.collection import Collection
 from pymongo import MongoClient
 
 from .manager import Manager
+from fdm.utils.data_structure.bubbles import TimeBubble
 
 
 class ColInterfaceBase():
@@ -421,7 +422,6 @@ class DynColInterface(ColInterfaceBase):
         self.feeder_func = feeder_func
 
     def query(self, code_list_or_str,
-              date: datetime,
               startdate: datetime,
               enddate: datetime,
               fields: list,
@@ -434,12 +434,24 @@ class DynColInterface(ColInterfaceBase):
                 codes, fields, startdate, enddate))
         fields = self._ensure_fields(fields)
 
+        # TODO: update bubbles to status
+
     def auto_update(self, update_params):
-        for code, field, gap in update_params:
-            start = gap[0]
-            end = gap[1]
-            df: DataFrame = self.feeder_func(code, field, start, end)
-            self._insert_many(df, code, field, gap)
+        for code, field, bubbles in update_params:
+            for bubble in bubbles:
+                # Download data
+                print(bubble)
+                start, end = bubble.to_actualrange()
+                df: DataFrame = self.feeder_func(code, field, start, end)
+                ids = self._insert(df, code, field, bubble)
+                # Update Bubbles in FieldStatus
+                dates = df[self.date_name]
+                date_s = min(dates).to_pydatetime()
+                date_e = (max(dates) + timedelta(1)).to_pydatetime()
+                self.manager.status[code, field] = self.manager.status[code, field].merge(
+                    TimeBubble(date_s, date_e))
+                # Log operation
+                self.manager.log.insert(code, field, bubble, ids)
         self.manager.log.flush()
 
     def _convert_codes(self, code_list_or_str) -> list:
@@ -457,22 +469,28 @@ class DynColInterface(ColInterfaceBase):
         res.union({self.code_name, self.date_name})
         return list(res)
 
-    def _insert_many(self, df: DataFrame, code, field, gap):
+    def _insert(self, df: DataFrame, code, field, bubble):
         '''Insert DataFrame into each sub collections accordingly.'''
+        ids = []
         if not df.empty:
             date_name = self.date_name
             df[date_name] = pd.to_datetime(df[date_name])
             df = df.sort_values(date_name)
-            mindate = min(df[date_name])
-            maxdate = max(df[date_name])
 
-            for year in range(mindate.year, maxdate.year+1):
-                idf = df[(df[date_name] <= datetime(year, 12, 31)) &
-                         (df[date_name] >= datetime(year, 1, 1))]
-                record = idf.to_dict('record')
-                if len(record) != 0:
-                    r = self.col[str(year)].insert_many(record)
+            records = df.to_dict('record')
+            for record in records:
+                date = record[self.date_name]
+                subcol = self.col[str(date.year)]
+                try:
+                    q_doc = {
+                        self.date_name: record[self.date_name],
+                        self.code_name: record[self.code_name],
+                    }
+                    r = subcol.update_one(q_doc, {'$set': record})
+                    assert r.acknowledged and r.matched_count == 1
+                    ids.append(r.upserted_id)
+                except:
+                    r = subcol.insert_one(record)
                     assert r.acknowledged
-                    self.manager.log.insert(
-                        code, field, gap, r)
-            return 0
+                    ids.append(r.inserted_id)
+        return ids
