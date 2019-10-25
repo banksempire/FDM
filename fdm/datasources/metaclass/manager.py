@@ -71,7 +71,7 @@ class FieldStatus():
         r = self.col.find_one({'code': code}, [field])
         try:
             return Bubbles(r[field])
-        except KeyError:
+        except (TypeError, KeyError):
             return Bubbles()
 
     def __setitem__(self, key, value: Bubbles):
