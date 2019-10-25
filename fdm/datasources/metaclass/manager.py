@@ -108,27 +108,27 @@ class Logger():
 
     def insert(self, code, field, bubble, ids):
         doc = {
-            'timestamp': datetime.now(),
-            'operation': 'insert',
-            'code': code,
-            'field': field,
-            'bubble_start': bubble.to_list()[0],
-            'bubble_end': bubble.to_list()[1],
-            '_ids': ids,
-            'valid': True
+            'Timestamp': datetime.now(),
+            'Operation': 'INSERT',
+            'Code': code,
+            'Field': field,
+            'Bubble_start': bubble.to_list()[0],
+            'Bubble_end': bubble.to_list()[1],
+            'Ids': ids,
+            'Valid': True
         }
         self.cache.append(doc)
 
     def update(self, code, field, bubble, ids):
         doc = {
-            'timestamp': datetime.now(),
-            'operation': 'update',
-            'code': code,
-            'field': field,
-            'bubble_start': bubble.to_list()[0],
-            'bubble_end': bubble.to_list()[1],
-            '_ids': ids,
-            'valid': True
+            'Timestamp': datetime.now(),
+            'Operation': 'UPDATE',
+            'Code': code,
+            'Field': field,
+            'Bubble_start': bubble.to_list()[0],
+            'Bubble_end': bubble.to_list()[1],
+            'Ids': ids,
+            'Valid': True
         }
         self.cache.append(doc)
 

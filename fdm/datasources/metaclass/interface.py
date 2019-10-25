@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor
 
 from pandas import DataFrame
 import pandas as pd
@@ -469,28 +470,33 @@ class DynColInterface(ColInterfaceBase):
         res.union({self.code_name, self.date_name})
         return list(res)
 
-    def _insert(self, df: DataFrame, code, field, bubble):
+    def _insert(self, df: DataFrame, code, field, bubble) -> list:
         '''Insert DataFrame into each sub collections accordingly.'''
-        ids = []
+        def _work(record):
+            date = record[self.date_name]
+            subcol = self.col[str(date.year)]
+            try:
+                q_doc = {
+                    self.date_name: record[self.date_name],
+                    self.code_name: record[self.code_name],
+                }
+                r = subcol.update_one(q_doc, {'$set': record})
+                assert r.acknowledged and r.matched_count == 1
+                return r.upserted_id
+            except:
+                r = subcol.insert_one(record)
+                assert r.acknowledged
+                return r.inserted_id
+
+        ids: list = []
         if not df.empty:
             date_name = self.date_name
             df[date_name] = pd.to_datetime(df[date_name])
             df = df.sort_values(date_name)
 
             records = df.to_dict('record')
-            for record in records:
-                date = record[self.date_name]
-                subcol = self.col[str(date.year)]
-                try:
-                    q_doc = {
-                        self.date_name: record[self.date_name],
-                        self.code_name: record[self.code_name],
-                    }
-                    r = subcol.update_one(q_doc, {'$set': record})
-                    assert r.acknowledged and r.matched_count == 1
-                    ids.append(r.upserted_id)
-                except:
-                    r = subcol.insert_one(record)
-                    assert r.acknowledged
-                    ids.append(r.inserted_id)
+            with ThreadPoolExecutor() as executor:
+                res = executor.map(_work, records)
+                ids = list(res)
+
         return ids
