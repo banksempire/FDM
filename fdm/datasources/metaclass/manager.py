@@ -119,16 +119,15 @@ class Logger():
         }
         self.cache.append(doc)
 
-    def update(self, code, field, bubble, date, result):
+    def update(self, code, field, bubble, ids):
         doc = {
             'timestamp': datetime.now(),
             'operation': 'update',
             'code': code,
             'field': field,
-            'date': date,
             'bubble_start': bubble.to_list()[0],
             'bubble_end': bubble.to_list()[1],
-            '_ids': result.upserted_id,
+            '_ids': ids,
             'valid': True
         }
         self.cache.append(doc)
