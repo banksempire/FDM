@@ -476,6 +476,7 @@ class DynColInterface(ColInterfaceBase):
         update_params = self.manager.solve_update_params(
             codes, fields, startdate, enddate)
         for code, field, bubbles in update_params:
+            status_bubble = self.manager.status[code, field]
             for bubble in bubbles:
                 # Download data
                 print(bubble)
@@ -487,9 +488,9 @@ class DynColInterface(ColInterfaceBase):
                 date_s = min(dates).to_pydatetime()
                 date_e = (max(dates) + timedelta(1)).to_pydatetime()
                 # Log operation
-                self.manager.status[code, field] = self.manager.status[code, field].merge(
-                    TimeBubble(date_s, date_e))
+                status_bubble = status_bubble.merge(TimeBubble(date_s, date_e))
                 self.manager.log.insert(code, field, bubble)
+            self.manager.status[code, field] = status_bubble
         self.manager.log.flush()
 
     def _convert_codes(self, code_list_or_str) -> list:
