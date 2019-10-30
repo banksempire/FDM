@@ -429,15 +429,52 @@ class DynColInterface(ColInterfaceBase):
               fillna=None,
               freq='B',
               force_update=False):
-        codes = self._convert_codes(code_list_or_str)
-        self.auto_update(
-            self.manager.solve_update_params(
-                codes, fields, startdate, enddate))
+
+        codes: list = self._convert_codes(code_list_or_str)
+        self._auto_update(codes, startdate, enddate, fields)
+
         fields = self._ensure_fields(fields)
 
         # TODO: update bubbles to status
 
-    def auto_update(self, update_params):
+    def remove(self, codes: list,
+               startdate: datetime,
+               enddate: datetime,
+               fields: list,):
+
+        params = self.manager.solve_remove_params(
+            codes, fields, startdate, enddate)
+
+        for code, field, bubbles in params:
+            print(code, field, bubbles)
+            status_bubble = self.manager.status[code, field]
+            for bubble in bubbles:
+                sub_bubble: TimeBubble
+                for sub_bubble in bubble.iter_years():
+                    print(sub_bubble)
+                    filter_doc: dict = {
+                        self.code_name: code,
+                        self.date_name: {'$gte': sub_bubble.min,
+                                         '$lt': sub_bubble.max},
+                    }
+                    year = sub_bubble.min.year
+                    subcol = self.col[str(year)]
+                    r = subcol.update_many(filter_doc,
+                                           {'$unset': {field: ''}},
+                                           upsert=True)
+                    assert r.acknowledged
+                # Log operation
+                status_bubble = status_bubble.carve(bubble)
+                self.manager.log.remove(code, field, bubble)
+            self.manager.status[code, field] = status_bubble
+        self.manager.log.flush()
+
+    def _auto_update(self, codes: list,
+                     startdate: datetime,
+                     enddate: datetime,
+                     fields: list):
+        update_params = self.manager.solve_update_params(
+            codes, fields, startdate, enddate)
         for code, field, bubbles in update_params:
             for bubble in bubbles:
                 # Download data
@@ -449,9 +486,9 @@ class DynColInterface(ColInterfaceBase):
                 dates = df[self.date_name]
                 date_s = min(dates).to_pydatetime()
                 date_e = (max(dates) + timedelta(1)).to_pydatetime()
+                # Log operation
                 self.manager.status[code, field] = self.manager.status[code, field].merge(
                     TimeBubble(date_s, date_e))
-                # Log operation
                 self.manager.log.insert(code, field, bubble)
         self.manager.log.flush()
 
@@ -475,16 +512,12 @@ class DynColInterface(ColInterfaceBase):
         def _work(record):
             date = record[self.date_name]
             subcol = self.col[str(date.year)]
-            try:
-                q_doc = {
-                    self.date_name: record[self.date_name],
-                    self.code_name: record[self.code_name],
-                }
-                r = subcol.update_one(q_doc, {'$set': record})
-                assert r.acknowledged and r.matched_count == 1
-            except:
-                r = subcol.insert_one(record)
-                assert r.acknowledged
+            q_doc: dict = {
+                self.date_name: record[self.date_name],
+                self.code_name: record[self.code_name],
+            }
+            r = subcol.update_one(q_doc, {'$set': record}, upsert=True)
+            assert r.acknowledged and r.matched_count == 1
 
         if not df.empty:
             date_name = self.date_name
