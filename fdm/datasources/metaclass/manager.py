@@ -24,6 +24,15 @@ class Manager():
                     target_date_range)
                 yield code, field, bubbles
 
+    def solve_remove_params(self, codes, fields, start, end):
+        target_date_range = [start, end + timedelta(1)]
+        for code in codes:
+            for field in fields:
+                has_date_range = self.status[code, field]
+                bubbles: Bubbles = has_date_range.carve(
+                    target_date_range)
+                yield code, field, bubbles
+
 
 class FieldStore():
     '''FieldStore keep track of all fields avaiable in a collection.'''
@@ -116,10 +125,10 @@ class Logger():
         }
         self.cache.append(doc)
 
-    def update(self, code, field, bubble):
+    def remove(self, code, field, bubble):
         doc = {
             'Timestamp': datetime.now(),
-            'Operation': 'UPDATE',
+            'Operation': 'REMOVE',
             'Code': code,
             'Field': field,
             'Bubble': bubble.to_list(),
