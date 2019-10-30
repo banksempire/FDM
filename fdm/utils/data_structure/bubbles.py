@@ -95,7 +95,7 @@ class Bubbles():
         return 'Bubbles({})'.format(self._bubbles)
 
     def __str__(self):
-        return 'Bubbles({})'.format(str(self._bubbles))
+        return '[{}]'.format(',\n'.join([str(b) for b in self._bubbles]))
 
     def __contains__(self, value):
         for b in self._bubbles:
