@@ -72,6 +72,14 @@ class TimeBubble:
         else:
             return self, None
 
+    def intersect(self, bubble):
+        if self._mergeable(bubble):
+            mi = max(self.min, bubble.min)
+            ma = min(self.max, bubble.max)
+            return TimeBubble(mi, ma, self.delta)
+        else:
+            return None
+
     def _mergeable(self, bubble):
         return abs(self.mid - bubble.mid) <= (self.leg + bubble.leg)
 
@@ -169,6 +177,14 @@ class Bubbles():
             res_list.append(b2)
 
         return Bubbles(res_list)
+
+    def intersect(self, bubble):
+        bubble = self._convert(bubble)
+        res = []
+        for s in self:
+            i = s.intersect(bubble)
+            res.append(i)
+        return Bubbles(res)
 
     def _triple_kill(self):
         self._drop_none()
