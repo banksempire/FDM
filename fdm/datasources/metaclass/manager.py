@@ -29,7 +29,7 @@ class Manager():
         for code in codes:
             for field in fields:
                 has_date_range = self.status[code, field]
-                bubbles: Bubbles = has_date_range.carve(
+                bubbles: Bubbles = has_date_range.intersect(
                     target_date_range)
                 yield code, field, bubbles
 
@@ -133,6 +133,7 @@ class Logger():
         self.cache.append(doc)
 
     def flush(self):
+        '''Commit cached log to database.'''
         if len(self.cache) != 0:
             r = self.col.insert_many(self.cache)
             assert r.acknowledged
