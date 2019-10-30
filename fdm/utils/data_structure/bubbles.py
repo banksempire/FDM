@@ -5,12 +5,12 @@ from copy import deepcopy
 
 
 class TimeBubble:
-    def __init__(self, lower, upper, delta=timedelta(days=1)):
+    def __init__(self, lower: datetime, upper: datetime, delta=timedelta(days=1)):
         if lower > upper:
             raise ValueError(
                 'Upper {} is less then lower {}.'.format(upper, lower))
-        self.max = upper
-        self.min = lower
+        self.max: datetime = upper
+        self.min: datetime = lower
         self.mid = self.max.timestamp() + self.min.timestamp()
         self.leg = self.max.timestamp() - self.min.timestamp()
         self.delta = delta
@@ -37,6 +37,14 @@ class TimeBubble:
         while date < self.max:
             yield date
             date += self.delta
+
+    def iter_years(self):
+        min_year: int = self.min.year
+        max_year: int = self.max.year
+        for year in range(min_year, max_year+1):
+            mi = max(self.min, datetime(year, 1, 1))
+            ma = min(self.max, datetime(year+1, 1, 1))
+            yield TimeBubble(mi, ma, self.delta)
 
     def to_list(self) -> list:
         return [self.min, self.max]
