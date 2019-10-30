@@ -106,29 +106,23 @@ class Logger():
         self.col: Collection = col['Log']
         self.cache: list = []
 
-    def insert(self, code, field, bubble, ids):
+    def insert(self, code, field, bubble):
         doc = {
             'Timestamp': datetime.now(),
             'Operation': 'INSERT',
             'Code': code,
             'Field': field,
-            'Bubble_start': bubble.to_list()[0],
-            'Bubble_end': bubble.to_list()[1],
-            'Ids': ids,
-            'Valid': True
+            'Bubble': bubble.to_list(),
         }
         self.cache.append(doc)
 
-    def update(self, code, field, bubble, ids):
+    def update(self, code, field, bubble):
         doc = {
             'Timestamp': datetime.now(),
             'Operation': 'UPDATE',
             'Code': code,
             'Field': field,
-            'Bubble_start': bubble.to_list()[0],
-            'Bubble_end': bubble.to_list()[1],
-            'Ids': ids,
-            'Valid': True
+            'Bubble': bubble.to_list(),
         }
         self.cache.append(doc)
 

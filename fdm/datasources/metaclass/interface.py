@@ -444,7 +444,7 @@ class DynColInterface(ColInterfaceBase):
                 print(bubble)
                 start, end = bubble.to_actualrange()
                 df: DataFrame = self.feeder_func(code, field, start, end)
-                ids = self._insert(df, code, field, bubble)
+                self._insert(df, code, field, bubble)
                 # Update Bubbles in FieldStatus
                 dates = df[self.date_name]
                 date_s = min(dates).to_pydatetime()
@@ -452,7 +452,7 @@ class DynColInterface(ColInterfaceBase):
                 self.manager.status[code, field] = self.manager.status[code, field].merge(
                     TimeBubble(date_s, date_e))
                 # Log operation
-                self.manager.log.insert(code, field, bubble, ids)
+                self.manager.log.insert(code, field, bubble)
         self.manager.log.flush()
 
     def _convert_codes(self, code_list_or_str) -> list:
@@ -470,7 +470,7 @@ class DynColInterface(ColInterfaceBase):
         res.union({self.code_name, self.date_name})
         return list(res)
 
-    def _insert(self, df: DataFrame, code, field, bubble) -> list:
+    def _insert(self, df: DataFrame, code, field, bubble):
         '''Insert DataFrame into each sub collections accordingly.'''
         def _work(record):
             date = record[self.date_name]
@@ -482,13 +482,10 @@ class DynColInterface(ColInterfaceBase):
                 }
                 r = subcol.update_one(q_doc, {'$set': record})
                 assert r.acknowledged and r.matched_count == 1
-                return r.upserted_id
             except:
                 r = subcol.insert_one(record)
                 assert r.acknowledged
-                return r.inserted_id
 
-        ids: list = []
         if not df.empty:
             date_name = self.date_name
             df[date_name] = pd.to_datetime(df[date_name])
@@ -496,7 +493,5 @@ class DynColInterface(ColInterfaceBase):
 
             records = df.to_dict('record')
             with ThreadPoolExecutor() as executor:
-                res = executor.map(_work, records)
-                ids = list(res)
-
-        return ids
+                for record in records:
+                    executor.submit(_work, record)
