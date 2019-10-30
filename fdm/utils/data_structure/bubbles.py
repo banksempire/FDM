@@ -32,6 +32,12 @@ class TimeBubble:
         except:
             return self.min <= value.min <= value.max < self.max
 
+    def __iter__(self):
+        date = self.min
+        while date < self.max:
+            yield date
+            date += self.delta
+
     def to_list(self) -> list:
         return [self.min, self.max]
 
