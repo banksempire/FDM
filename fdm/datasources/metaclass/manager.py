@@ -99,10 +99,7 @@ class FieldStatus():
         if code in self.col.distinct('code'):
             if isinstance(fields, str):
                 fields = [fields]
-            del_dict = {}
-            for f in fields:
-                del_dict[f] = ''
-
+            del_dict = {k: '' for k in fields}
             r = self.col.update_one({'code': code},
                                     {'$unset': del_dict})
             assert r.acknowledged
