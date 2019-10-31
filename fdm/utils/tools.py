@@ -16,4 +16,5 @@ def del_id(df) -> DataFrame:
     '''Delete column['_id'] from result'''
     if not df.empty:
         del df['_id']
+        df.index = range(df.shape[0])
     return df
