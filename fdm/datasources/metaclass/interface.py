@@ -477,18 +477,26 @@ class DynColInterface(ColInterfaceBase):
             codes, fields, startdate, enddate)
         for code, field, bubbles in update_params:
             status_bubble = self.manager.status[code, field]
-            for bubble in bubbles:
+            b_len = len(bubbles)-1
+            for i, bubble in enumerate(bubbles):
                 # Download data
                 print(bubble)
                 start, end = bubble.to_actualrange()
                 df: DataFrame = self.feeder_func(code, field, start, end)
                 self._insert(df, code, field, bubble)
                 # Update Bubbles in FieldStatus
-                dates = df[self.date_name]
-                date_s = min(dates).to_pydatetime()
-                date_e = (max(dates) + timedelta(1)).to_pydatetime()
-                # Log operation
-                status_bubble = status_bubble.merge(TimeBubble(date_s, date_e))
+                if df.empty:
+                    # To deal with data freq other than B or D
+                    # Will fill in gaps even with no data returned, except the last one
+                    if i != b_len:
+                        status_bubble = status_bubble.merge(bubble)
+                else:
+                    dates = df[self.date_name]
+                    date_s = min(dates).to_pydatetime()
+                    date_e = (max(dates) + timedelta(1)).to_pydatetime()
+                    # Log operation
+                    status_bubble = status_bubble.merge(
+                        TimeBubble(date_s, date_e))
                 self.manager.log.insert(code, field, bubble)
             self.manager.status[code, field] = status_bubble
         self.manager.log.flush()
