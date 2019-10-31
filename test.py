@@ -1,4 +1,4 @@
-'''from datetime import datetime
+from datetime import datetime
 
 from fdm.utils.client import client
 from fdm.utils.test import test_feeder_func, test_config, test_feeder_func_Q
@@ -25,15 +25,9 @@ interface.remove(['abc'], fields=['cdb'], startdate=datetime(
 interface.query('abc', fields=['cdb'], startdate=datetime(
     2019, 1, 1), enddate=datetime(2020, 12, 1))
 
-interface.query('abc', fields=['cdb'], startdate=datetime(
-    2019, 1, 1), enddate=datetime(2020, 12, 1))
+print(interface.query('abc', fields=['cdb'], startdate=datetime(
+    2019, 1, 1), enddate=datetime(2020, 12, 1)))
 
 
 print(datetime.now()-time)
-client.close()'''
-
-from datetime import datetime
-from fdm.utils.data_structure.bubbles import TimeBubble
-
-print(TimeBubble(datetime(2018, 1, 1), datetime(
-    2018, 12, 1)).to_mongodb_dates('M'))
+client.close()

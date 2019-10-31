@@ -10,6 +10,7 @@ from pymongo import MongoClient
 
 from .manager import Manager
 from fdm.utils.data_structure.bubbles import TimeBubble
+from fdm.utils.tools import del_id
 
 
 class ColInterfaceBase():
@@ -154,12 +155,6 @@ class ColInterface(ColInterfaceBase):
                 f = f.copy()
                 f = list(set(f).union((self.code_name, self.date_name)))
             return f
-
-        def del_id(df) -> DataFrame:
-            '''Delete column['_id'] from result'''
-            if not df.empty:
-                del df['_id']
-            return df
 
         def fill_nan(df: DataFrame, freq, method) -> DataFrame:
             def iter_na_list_by_date():
@@ -431,11 +426,24 @@ class DynColInterface(ColInterfaceBase):
               force_update=False):
 
         codes: list = self._convert_codes(code_list_or_str)
+        if force_update:
+            self.remove(codes, startdate, enddate, fields)
         self._auto_update(codes, startdate, enddate, fields)
-
         fields = self._ensure_fields(fields)
 
-        # TODO: update bubbles to status
+        q_doc = {self.code_name: {'$in': codes}}
+
+        if freq in 'BD':
+            res = DataFrame()
+            for sub_b in TimeBubble(startdate, enddate+timedelta(1)).iter_years():
+                q_doc[self.date_name] = sub_b.to_mongodb_date_range()
+                year = sub_b.min.year
+                subcol = self.col[str(year)]
+                res = res.append(DataFrame(subcol.find(q_doc, fields)))
+        else:
+            pass
+
+        return del_id(res)
 
     def remove(self, codes: list,
                startdate: datetime,
@@ -446,12 +454,10 @@ class DynColInterface(ColInterfaceBase):
             codes, fields, startdate, enddate)
 
         for code, field, bubbles in params:
-            print(code, field, bubbles)
             status_bubble = self.manager.status[code, field]
             for bubble in bubbles:
                 sub_bubble: TimeBubble
                 for sub_bubble in bubble.iter_years():
-                    print(sub_bubble)
                     filter_doc: dict = {
                         self.code_name: code,
                         self.date_name: {'$gte': sub_bubble.min,
@@ -480,7 +486,6 @@ class DynColInterface(ColInterfaceBase):
             b_len = len(bubbles)-1
             for i, bubble in enumerate(bubbles):
                 # Download data
-                print(bubble)
                 start, end = bubble.to_actualrange()
                 df: DataFrame = self.feeder_func(code, field, start, end)
                 self._insert(df, code, field, bubble)
@@ -513,7 +518,7 @@ class DynColInterface(ColInterfaceBase):
     def _ensure_fields(self, fields) -> list:
         '''Ensure fields contain date and code and remove duplicated value.'''
         res = set(fields)
-        res.union({self.code_name, self.date_name})
+        res = res.union({self.code_name, self.date_name})
         return list(res)
 
     def _insert(self, df: DataFrame, code, field, bubble):
