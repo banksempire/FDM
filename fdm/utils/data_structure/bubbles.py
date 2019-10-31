@@ -3,6 +3,8 @@ from datetime import timedelta
 
 from copy import deepcopy
 
+import pandas as pd
+
 
 class TimeBubble:
     def __init__(self, lower: datetime, upper: datetime, delta=timedelta(days=1)):
@@ -51,6 +53,13 @@ class TimeBubble:
 
     def to_actualrange(self) -> list:
         return [self.min, self.max-self.delta]
+
+    def to_mongodb_date_range(self) -> dict:
+        return {'$gte': self.min, '$lt': self.max}
+
+    def to_mongodb_dates(self, freq) -> dict:
+        date_range = pd.date_range(self.min, self.max-self.delta, freq=freq)
+        return {'$in': [d.to_pydatetime() for d in date_range]}
 
     def merge(self, bubble):
         if self._mergeable(bubble):

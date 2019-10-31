@@ -1,4 +1,4 @@
-from datetime import datetime
+'''from datetime import datetime
 
 from fdm.utils.client import client
 from fdm.utils.test import test_feeder_func, test_config, test_feeder_func_Q
@@ -30,4 +30,10 @@ interface.query('abc', fields=['cdb'], startdate=datetime(
 
 
 print(datetime.now()-time)
-client.close()
+client.close()'''
+
+from datetime import datetime
+from fdm.utils.data_structure.bubbles import TimeBubble
+
+print(TimeBubble(datetime(2018, 1, 1), datetime(
+    2018, 12, 1)).to_mongodb_dates('M'))
