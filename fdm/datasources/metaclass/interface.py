@@ -419,9 +419,9 @@ class DynColInterface(ColInterfaceBase):
         self.feeder_func = feeder_func
 
     def query(self, code_list_or_str,
+              fields: list,
               startdate: datetime,
               enddate: datetime,
-              fields: list,
               force_update=False):
 
         codes: list = self._convert_codes(code_list_or_str)
