@@ -84,6 +84,7 @@ class ColInterfaceBase():
             return 0
         return 1
 
+
 class ColInterface(ColInterfaceBase):
     '''This interface standardized mongodb collection-level operation over
     a series of sub collections.
@@ -344,12 +345,10 @@ class ColInterface(ColInterfaceBase):
         col: Collection = self.col[str(date.year)]
         col.delete_many({self.date_name: date})
 
-
-
-
     # ----------------------------------------
     # Qurey date
     # ----------------------------------------
+
     def lastdate(self) -> datetime:
         '''Return the max(date) in all sub collections.'''
         subcols = self.list_subcollection_names()
@@ -471,10 +470,6 @@ class DynColInterface(ColInterfaceBase):
                 self.manager.log.remove(code, field, bubble)
             self.manager.status[code, field] = status_bubble
         self.manager.log.flush()
-
-    def create_index(self):
-        for col in self.list_subcollections():
-            col.create_index()
 
     def _auto_update(self, codes: list,
                      startdate: datetime,

@@ -67,6 +67,9 @@ class _DynCollectionBase:
                                   )
         return df
 
+    def create_index(self):
+        self.interface.create_indexs()
+
 
 class _DbBase:
     def __init__(self, client: MongoClient = client.client):
