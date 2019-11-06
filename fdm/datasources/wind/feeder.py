@@ -41,5 +41,10 @@ def wsd(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame
 
     data = w.wsd(code, qfield, start, end, qparam)
     assert data.ErrorCode == 0
+    # Download data
     df = DataFrame(data.Data, columns=data.Times, index=data.Codes).T
-    return df
+    # Transform data
+    df = df.unstack().reset_index()
+    df.columns = ['code', 'date', field]
+    df['date'] = pd.to_datetime(df['date'])
+    return df[(df['date'] <= end) & (df['date'] >= start)]
