@@ -26,3 +26,20 @@ def edb(codes, start, end) -> DataFrame:
     df.columns = ['code', 'date', 'value']
     df['date'] = pd.to_datetime(df['date'])
     return df[(df['date'] <= end) & (df['date'] >= start)]
+
+
+def wsd(code: str, field: str, start: datetime, end: datetime) -> DataFrame:
+    # Init wind api
+    from WindPy import w
+    w.start()
+    # unpack params
+    try:
+        qfield, qparam = field.split('||')
+    except:
+        qfield = field
+        qparam = ''
+
+    data = w.wsd(code, qfield, start, end, qparam)
+    assert data.ErrorCode == 0
+    df = DataFrame(data.Data, columns=data.Times, index=data.Codes).T
+    return df
