@@ -57,15 +57,28 @@ class _DynCollectionBase:
     def __init__(self, col: Collection, setting: dict):
         self.interface = DynColInterface(col, self.feeder_func, setting)
 
-    def query(self, code_list_or_str,
-              startdate: datetime,
-              enddate: datetime,
-              fields: list,
+    def query(self, codes,
+              fields,
+              startdate,
+              enddate,
               ) -> DataFrame:
-        df = self.interface.query(code_list_or_str,
+
+        # Prepare params
+        def convert_dt(df):
+            return datetime().strptime(df, '%Y-%m-%d')
+
+        codes = codes if not isinstance(codes, str) else[codes]
+        fields = fields if not isinstance(fields, str) else[fields]
+        startdate = startdate if not isinstance(
+            startdate, str) else convert_dt(startdate)
+        enddate = enddate if not isinstance(
+            enddate, str) else convert_dt(enddate)
+
+        # Get data
+        df = self.interface.query(codes,
+                                  fields,
                                   startdate,
                                   enddate,
-                                  fields,
                                   )
         return df
 
