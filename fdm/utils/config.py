@@ -31,7 +31,8 @@ config: dict = {
             "date_name": "date",
             "code_name": "code",
             "colSetting": {
-                "EDB": "EDB"
+                "EDB": "EDB",
+                "WSD": "WSD"
             }
         }
     },

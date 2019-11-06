@@ -3,13 +3,18 @@ from datetime import datetime
 
 import pandas as pd
 
-from fdm.datasources.metaclass import _CollectionBase, _DbBase
-from .feeder import (edb)
+from fdm.datasources.metaclass import (_CollectionBase,
+                                       _DbBase,
+                                       _DynCollectionBase)
+from .feeder import (edb, wsd)
 
 
 class Wind(_DbBase):
     def edb(self):
         return self._inti_col(EDB)
+
+    def wsd(self):
+        return self._inti_col(WSD)
 
 
 class EDB(_CollectionBase):
@@ -49,16 +54,5 @@ class EDB(_CollectionBase):
         return res
 
 
-class WSD(_CollectionBase):
-    def udpate(self, codes=None, enddate: datetime = datetime.now()):
-        pass
-
-    def query(self, code_list_or_str=None,
-              date=None,
-              startdate: datetime = None,
-              enddate: datetime = None,
-              freq='D',
-              fields: list = None,
-              fillna=None,
-              autoupdate=True):
-        pass
+class WSD(_DynCollectionBase):
+    feeder_func = wsd
