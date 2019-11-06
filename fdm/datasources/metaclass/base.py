@@ -7,7 +7,7 @@ from pymongo.collection import Collection
 from pymongo import MongoClient
 
 from fdm.utils import client, config
-from .interface import ColInterface
+from .interface import ColInterface, DynColInterface
 
 
 class _CollectionBase:
@@ -47,6 +47,25 @@ class _CollectionBase:
 
     def get_client(self) -> MongoClient:
         return self.interface.get_client()
+
+
+class _DynCollectionBase:
+    '''A simple warper class of ColInterface'''
+
+    def __init__(self, col: Collection, setting: dict):
+        self.interface = DynColInterface(col, setting)
+
+    def query(self, code_list_or_str,
+              startdate: datetime,
+              enddate: datetime,
+              fields: list,
+              ) -> DataFrame:
+        df = self.interface.query(code_list_or_str,
+                                  startdate,
+                                  enddate,
+                                  fields,
+                                  )
+        return df
 
 
 class _DbBase:

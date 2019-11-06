@@ -75,10 +75,10 @@ class ColInterface(ColInterfaceBase):
     # ----------------------------------------
     def query(self, code_list_or_str=None,
               date=None,
-              startdate: datetime = None,
-              enddate: datetime = None,
+              startdate: Optional[datetime] = None,
+              enddate: Optional[datetime] = None,
               freq='B',
-              fields: list = None,
+              fields: Optional[list] = None,
               fillna=None):
         '''Query data from database.
 
