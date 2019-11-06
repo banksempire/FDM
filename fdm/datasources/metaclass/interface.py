@@ -421,8 +421,6 @@ class DynColInterface(ColInterfaceBase):
               startdate: datetime,
               enddate: datetime,
               fields: list,
-              fillna=None,
-              freq='B',
               force_update=False):
 
         codes: list = self._convert_codes(code_list_or_str)
@@ -433,15 +431,12 @@ class DynColInterface(ColInterfaceBase):
 
         q_doc = {self.code_name: {'$in': codes}}
 
-        if freq in 'BD':
-            res = DataFrame()
-            for sub_b in TimeBubble(startdate, enddate+timedelta(1)).iter_years():
-                q_doc[self.date_name] = sub_b.to_mongodb_date_range()
-                year = sub_b.min.year
-                subcol = self.col[str(year)]
-                res = res.append(DataFrame(subcol.find(q_doc, fields)))
-        else:
-            pass
+        res = DataFrame()
+        for sub_b in TimeBubble(startdate, enddate+timedelta(1)).iter_years():
+            q_doc[self.date_name] = sub_b.to_mongodb_date_range()
+            year = sub_b.min.year
+            subcol = self.col[str(year)]
+            res = res.append(DataFrame(subcol.find(q_doc, fields)))
 
         return del_id(res)
 
