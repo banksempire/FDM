@@ -28,7 +28,7 @@ def edb(codes, start, end) -> DataFrame:
     return df[(df['date'] <= end) & (df['date'] >= start)]
 
 
-def wsd(code: str, field: str, start: datetime, end: datetime) -> DataFrame:
+def wsd(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
     # Init wind api
     from WindPy import w
     w.start()
