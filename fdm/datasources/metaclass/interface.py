@@ -62,6 +62,27 @@ class ColInterfaceBase():
         '''Return MonogClient.'''
         return self.col.database.client
 
+    # ----------------------------------------
+    # Collection level management
+    # ----------------------------------------
+    def drop(self):
+        '''Drop all sub collections.'''
+        self.col.drop()
+        subcols = self.list_subcollection_names()
+        for subcol in subcols:
+            self.col[subcol].drop()
+        return 0
+
+    def create_indexs(self, indexes: list = None):
+        '''Create index for all sub collections.'''
+        indexes = [self.code_name,
+                   self.date_name] if indexes is None else indexes
+        if self.count() != 0:
+            for subcol in self.list_subcollections():
+                for index in indexes:
+                    subcol.create_index(index)
+            return 0
+        return 1
 
 class ColInterface(ColInterfaceBase):
     '''This interface standardized mongodb collection-level operation over
@@ -323,27 +344,8 @@ class ColInterface(ColInterfaceBase):
         col: Collection = self.col[str(date.year)]
         col.delete_many({self.date_name: date})
 
-    # ----------------------------------------
-    # Collection level management
-    # ----------------------------------------
-    def drop(self):
-        '''Drop all sub collections.'''
-        self.col.drop()
-        subcols = self.list_subcollection_names()
-        for subcol in subcols:
-            self.col[subcol].drop()
-        return 0
 
-    def create_indexs(self, indexes: list = None):
-        '''Create index for all sub collections.'''
-        indexes = [self.code_name,
-                   self.date_name] if indexes is None else indexes
-        if self.count() != 0:
-            for subcol in self.list_subcollections():
-                for index in indexes:
-                    subcol.create_index(index)
-            return 0
-        return 1
+
 
     # ----------------------------------------
     # Qurey date
@@ -469,6 +471,10 @@ class DynColInterface(ColInterfaceBase):
                 self.manager.log.remove(code, field, bubble)
             self.manager.status[code, field] = status_bubble
         self.manager.log.flush()
+
+    def create_index(self):
+        for col in self.list_subcollections():
+            col.create_index()
 
     def _auto_update(self, codes: list,
                      startdate: datetime,
