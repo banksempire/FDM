@@ -7,6 +7,7 @@ from pymongo.collection import Collection
 from pymongo import MongoClient
 
 from fdm.utils import client, config
+from fdm.utils.test import test_feeder_func
 from .interface import ColInterface, DynColInterface
 
 
@@ -51,9 +52,10 @@ class _CollectionBase:
 
 class _DynCollectionBase:
     '''A simple warper class of ColInterface'''
+    feeder_func = test_feeder_func
 
     def __init__(self, col: Collection, setting: dict):
-        self.interface = DynColInterface(col, setting)
+        self.interface = DynColInterface(col, self.feeder_func, setting)
 
     def query(self, code_list_or_str,
               startdate: datetime,
