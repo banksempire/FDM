@@ -99,7 +99,7 @@ class _DynCollectionBase:
 
     def convert_params(self, codes, fields, startdate, enddate):
         def convert_dt(df):
-            return datetime().strptime(df, '%Y-%m-%d')
+            return datetime.strptime(df, '%Y-%m-%d')
 
         codes = codes if not isinstance(codes, str) else[codes]
         fields = fields if not isinstance(fields, str) else[fields]
