@@ -32,7 +32,9 @@ config: dict = {
             "code_name": "code",
             "colSetting": {
                 "EDB": "EDB",
-                "WSD": "WSD"
+                "WSD": "WSD",
+                "SectorConstituent": "sectorConstituent",
+                "IndexConstituent": "indexConstituent"
             }
         }
     },
