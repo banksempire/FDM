@@ -1,4 +1,5 @@
 from .config import config
+from .maintainer import update_all
 
 
 def change_client(address, port):
