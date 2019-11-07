@@ -54,3 +54,33 @@ def wsd(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame
     else:
         print(data)
         raise ValueError('Error code:{0}'.format(data.ErrorCode))
+
+
+def wset_sector_constituent(sector_type: str):
+    def main(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
+        # Init wind api
+        from WindPy import w
+        w.start()
+
+        assert start == end
+        param = "date={d};{t}={c}".format(
+            d=start.strftime('%Y-%m-%d'), c=code, t=sector_type)
+        data = w.wset("sectorconstituent", param)
+
+        if data.ErrorCode == 0:
+            # Download data
+            df = DataFrame(data.Data, columns=data.Codes, index=data.Fields).T
+            value = df.to_json()
+            doc = {
+                'code': code,
+                'date': start,
+                field: value
+            }
+            return DataFrame([doc])
+        elif data.ErrorCode == -40520007:
+            return DataFrame()
+        else:
+            print(data)
+            raise ValueError('Error code:{0}'.format(data.ErrorCode))
+
+    return main
