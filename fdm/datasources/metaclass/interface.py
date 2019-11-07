@@ -422,24 +422,29 @@ class DynColInterface(ColInterfaceBase):
               fields: list,
               startdate: datetime,
               enddate: datetime,
-              force_update=False):
-
+              force_update=False,
+              update_only=False):
+        # Convert string code to list
         codes: list = self._convert_codes(code_list_or_str)
         if force_update:
+            # Remove targeted data from database if deemed outdated
             self.remove(codes, startdate, enddate, fields)
         self._auto_update(codes, startdate, enddate, fields)
         fields = self._ensure_fields(fields)
 
         q_doc = {self.code_name: {'$in': codes}}
 
-        res = DataFrame()
-        for sub_b in TimeBubble(startdate, enddate+timedelta(1)).iter_years():
-            q_doc[self.date_name] = sub_b.to_mongodb_date_range()
-            year = sub_b.min.year
-            subcol = self.col[str(year)]
-            res = res.append(DataFrame(subcol.find(q_doc, fields)))
+        if update_only:
+            return DataFrame()
+        else:
+            res = DataFrame()
+            for sub_b in TimeBubble(startdate, enddate+timedelta(1)).iter_years():
+                q_doc[self.date_name] = sub_b.to_mongodb_date_range()
+                year = sub_b.min.year
+                subcol = self.col[str(year)]
+                res = res.append(DataFrame(subcol.find(q_doc, fields)))
 
-        return del_id(res)
+            return del_id(res)
 
     def remove(self, codes: list,
                startdate: datetime,
