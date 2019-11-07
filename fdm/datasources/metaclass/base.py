@@ -61,9 +61,43 @@ class _DynCollectionBase:
               fields,
               startdate,
               enddate,
+              force_update=False
               ) -> DataFrame:
 
         # Prepare params
+        codes, fields, startdate, enddate = self.convert_params(
+            codes, fields, startdate, enddate)
+
+        # Get data
+        df = self.interface.query(codes,
+                                  fields,
+                                  startdate,
+                                  enddate,
+                                  force_update
+                                  )
+        return df
+
+    def update(self, codes,
+               fields,
+               startdate,
+               enddate,
+               force_update=False
+               ):
+
+        # Prepare params
+        codes, fields, startdate, enddate = self.convert_params(
+            codes, fields, startdate, enddate)
+
+        # Get data
+        self.interface.query(codes,
+                             fields,
+                             startdate,
+                             enddate,
+                             force_update,
+                             update_only=True
+                             )
+
+    def convert_params(self, codes, fields, startdate, enddate):
         def convert_dt(df):
             return datetime().strptime(df, '%Y-%m-%d')
 
@@ -73,14 +107,7 @@ class _DynCollectionBase:
             startdate, str) else convert_dt(startdate)
         enddate = enddate if not isinstance(
             enddate, str) else convert_dt(enddate)
-
-        # Get data
-        df = self.interface.query(codes,
-                                  fields,
-                                  startdate,
-                                  enddate,
-                                  )
-        return df
+        return codes, fields, startdate, enddate
 
     def create_index(self):
         self.interface.create_indexs()
