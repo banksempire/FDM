@@ -70,13 +70,16 @@ def wset_sector_constituent(sector_type: str):
         if data.ErrorCode == 0:
             # Download data
             df = DataFrame(data.Data, columns=data.Codes, index=data.Fields).T
-            value = df.to_json()
-            doc = {
-                'code': code,
-                'date': start,
-                field: value
-            }
-            return DataFrame([doc])
+            if not df.empty:
+                value = df.to_json()
+                doc = {
+                    'code': code,
+                    'date': start,
+                    field: value
+                }
+                return DataFrame([doc])
+            else:
+                return DataFrame()
         elif data.ErrorCode == -40520007:
             return DataFrame()
         else:
