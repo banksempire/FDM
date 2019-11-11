@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor
+from collections import defaultdict
 
 from pandas import DataFrame
 import pandas as pd
 
 from pymongo.collection import Collection
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 
 from .manager import Manager
 from fdm.utils.data_structure.bubbles import TimeBubble
@@ -29,7 +30,7 @@ class ColInterfaceBase():
 
     def list_subcollection_names(self, ascending: bool = True) -> list:
         '''Return all name of all subcollections.'''
-        property_name = ('FieldStatus','FieldStore','Log')
+        property_name = ('FieldStatus', 'FieldStore', 'Log')
         db = self.col.database
         res = []
         for name in db.list_collection_names():
@@ -535,12 +536,28 @@ class DynColInterface(ColInterfaceBase):
             r = subcol.update_one(q_doc, {'$set': record}, upsert=True)
             assert r.acknowledged and r.matched_count == 1
 
+        def form_bulk_write(records):
+            bulks = defaultdict(list)
+            for record in records:
+                year = str(record[self.date_name].year)
+                q_doc: dict = {
+                    self.date_name: record[self.date_name],
+                    self.code_name: record[self.code_name],
+                }
+                bulks[year].append(
+                    UpdateOne(q_doc, {'$set': record}, upsert=True))
+            return bulks
+
         if not df.empty:
             date_name = self.date_name
             df[date_name] = pd.to_datetime(df[date_name])
             df = df.sort_values(date_name)
 
             records = df.to_dict('record')
-            with ThreadPoolExecutor() as executor:
+            bulks = form_bulk_write(records)
+            for year, v in bulks.items():
+                subcol = self.col[year]
+                subcol.bulk_write(v, ordered=False)
+            '''with ThreadPoolExecutor() as executor:
                 for record in records:
-                    executor.submit(_work, record)
+                    executor.submit(_work, record)'''
