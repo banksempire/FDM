@@ -29,11 +29,12 @@ class ColInterfaceBase():
 
     def list_subcollection_names(self, ascending: bool = True) -> list:
         '''Return all name of all subcollections.'''
+        property_name = ('FieldStatus','FieldStore','Log')
         db = self.col.database
         res = []
         for name in db.list_collection_names():
             sname = name.split('.')
-            if sname[0] == self.col.name and len(sname) >= 2 and sname[1].isnumeric():
+            if sname[0] == self.col.name and len(sname) >= 2 and sname[1] not in property_name:
                 res.append(sname[1])
         res.sort(reverse=not ascending)
         return res
