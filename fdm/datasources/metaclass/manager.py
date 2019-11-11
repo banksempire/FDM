@@ -113,23 +113,11 @@ class Logger():
         self.cache: list = []
 
     def insert(self, code, field, bubble):
-        doc = {
-            'Timestamp': datetime.now(),
-            'Operation': 'INSERT',
-            'Code': code,
-            'Field': field,
-            'Bubble': bubble.to_list(),
-        }
+        doc = self._create_doc(code, field, bubble, 'INSERT')
         self.cache.append(doc)
 
     def remove(self, code, field, bubble):
-        doc = {
-            'Timestamp': datetime.now(),
-            'Operation': 'REMOVE',
-            'Code': code,
-            'Field': field,
-            'Bubble': bubble.to_list(),
-        }
+        doc = self._create_doc(code, field, bubble, 'REMOVE')
         self.cache.append(doc)
 
     def flush(self):
@@ -139,3 +127,13 @@ class Logger():
             assert r.acknowledged
             del self.cache
             self.cache = []
+
+    def _create_doc(self, code, field, bubble, op):
+        doc = {
+            'Timestamp': datetime.now(),
+            'Operation': op,
+            'Code': code,
+            'Field': field,
+            'Bubble': bubble.to_list(),
+        }
+        return doc
