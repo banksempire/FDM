@@ -482,9 +482,9 @@ class DynColInterface(ColInterfaceBase):
                      startdate: datetime,
                      enddate: datetime,
                      fields: list):
-        update_params = self.manager.solve_update_params(
-            codes, fields, startdate, enddate)
-        for code, field, bubbles in update_params:  
+        def _work(param):
+            code, field, bubbles = param
+            logs = []
             status_bubble = self.manager.status[code, field]
             b_len = len(bubbles)-1
             for i, bubble in enumerate(bubbles):
@@ -505,8 +505,34 @@ class DynColInterface(ColInterfaceBase):
                     # Log operation
                     status_bubble = status_bubble.merge(
                         TimeBubble(date_s, date_e))
-                self.manager.log.insert(code, field, bubble)
+                log = self.manager.log._create_doc(
+                    code, field, bubble, 'INSERT')
+                logs.append(log)
             self.manager.status[code, field] = status_bubble
+            return logs
+
+        def create_index():
+            s_year = startdate.year
+            e_year = enddate.year
+            for year in range(s_year, e_year + 1):
+                subcol = self.col[str(year)]
+                subcol.create_index(self.code_name)
+                subcol.create_index(self.date_name)
+
+        create_index()
+        update_params = self.manager.solve_update_params(
+            codes, fields, startdate, enddate)
+        # multi thread version
+        '''with ThreadPoolExecutor() as executor:
+            logs = executor.map(_work, update_params)
+            for l in logs:
+            self.manager.log.cache += l
+            '''
+
+        # single thread version
+        for param in update_params:
+            self.manager.log.cache += _work(param)
+
         self.manager.log.flush()
 
     def _convert_codes(self, code_list_or_str) -> list:
