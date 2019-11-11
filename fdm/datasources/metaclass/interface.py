@@ -484,7 +484,7 @@ class DynColInterface(ColInterfaceBase):
                      fields: list):
         update_params = self.manager.solve_update_params(
             codes, fields, startdate, enddate)
-        for code, field, bubbles in update_params:
+        for code, field, bubbles in update_params:  
             status_bubble = self.manager.status[code, field]
             b_len = len(bubbles)-1
             for i, bubble in enumerate(bubbles):
@@ -526,16 +526,6 @@ class DynColInterface(ColInterfaceBase):
 
     def _insert(self, df: DataFrame, code, field, bubble):
         '''Insert DataFrame into each sub collections accordingly.'''
-        def _work(record):
-            date = record[self.date_name]
-            subcol = self.col[str(date.year)]
-            q_doc: dict = {
-                self.date_name: record[self.date_name],
-                self.code_name: record[self.code_name],
-            }
-            r = subcol.update_one(q_doc, {'$set': record}, upsert=True)
-            assert r.acknowledged and r.matched_count == 1
-
         def form_bulk_write(records):
             bulks = defaultdict(list)
             for record in records:
@@ -558,6 +548,3 @@ class DynColInterface(ColInterfaceBase):
             for year, v in bulks.items():
                 subcol = self.col[year]
                 subcol.bulk_write(v, ordered=False)
-            '''with ThreadPoolExecutor() as executor:
-                for record in records:
-                    executor.submit(_work, record)'''
