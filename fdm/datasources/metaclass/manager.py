@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from collections import defaultdict
 
 from pymongo.collection import Collection
 
@@ -14,24 +15,34 @@ class Manager():
         code, field = key
         self.status[code, field] = value
 
-    def solve_update_params(self, codes, fields, start, end):
+    def solve_update_params(self, codes: list,
+                            fields: list,
+                            start: datetime,
+                            end: datetime):
         '''Solve params for data that need to be downloaded'''
         target_date_range = [start, end + timedelta(1)]
+        status = self.status[codes, fields]
         for code in codes:
             for field in fields:
-                has_date_range = self.status[code, field]
-                bubbles: Bubbles = has_date_range.gaps(
+                bubbles = status[code, field]
+                gaps: Bubbles = bubbles.gaps(
                     target_date_range)
-                yield code, field, bubbles
+                if not gaps.isempty:
+                    yield code, field, bubbles, gaps
 
-    def solve_remove_params(self, codes, fields, start, end):
+    def solve_remove_params(self, codes: list,
+                            fields: list,
+                            start: datetime,
+                            end: datetime):
         target_date_range = [start, end + timedelta(1)]
+        status = self.status[codes, fields]
         for code in codes:
             for field in fields:
-                has_date_range = self.status[code, field]
-                bubbles: Bubbles = has_date_range.intersect(
+                bubbles = status[code, field]
+                gaps: Bubbles = bubbles.intersect(
                     target_date_range)
-                yield code, field, bubbles
+                if not gaps.isempty:
+                    yield code, field, bubbles, gaps
 
 
 class FieldStore():
@@ -48,11 +59,12 @@ class FieldStore():
     def __iter__(self):
         return iter(self.cache)
 
-    def append(self, field: str):
-        if not field in self:
-            r = self.col.insert_one({'field': field})
-            assert r.acknowledged
-            self.cache.add(field)
+    def append(self, fields):
+        for field in fields:
+            if not field in self:
+                r = self.col.insert_one({'field': field})
+                assert r.acknowledged
+                self.cache.add(field)
 
     def drop(self, field: str):
         if field in self:
@@ -75,13 +87,25 @@ class FieldStatus():
             yield i
 
     def __getitem__(self, key):
-        code, field = key
-        self.fields.append(field)
-        r = self.col.find_one({'code': code}, [field])
-        try:
-            return Bubbles(r[field])
-        except (TypeError, KeyError):
-            return Bubbles()
+        codes, fields = key
+        codes = [codes] if isinstance(codes, str) else codes
+        fields = [fields] if isinstance(fields, str) else fields
+        self.fields.append(fields)
+        if isinstance(key[0], str) and isinstance(key[1], str):
+            r = self.col.find_one({'code': codes[0]}, fields)
+            try:
+                return Bubbles(r[fields])
+            except (TypeError, KeyError):
+                return Bubbles()
+        else:
+            docs = self.col.find({'code': {'$in': codes}}, fields+['code'])
+            # TODO: unpack result
+            res = defaultdict(Bubbles)
+            for doc in docs:
+                q_fields = set(doc.keys()) - {'code', '_id'}
+                for f in q_fields:
+                    res[doc['code'], f] = Bubbles(doc[f])
+            return res
 
     def __setitem__(self, key, value: Bubbles):
         code, field = key

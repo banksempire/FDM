@@ -456,11 +456,10 @@ class DynColInterface(ColInterfaceBase):
         params = self.manager.solve_remove_params(
             codes, fields, startdate, enddate)
 
-        for code, field, bubbles in params:
-            status_bubble = self.manager.status[code, field]
-            for bubble in bubbles:
+        for code, field, bubbles, gaps in params:
+            for gap in gaps:
                 sub_bubble: TimeBubble
-                for sub_bubble in bubble.iter_years():
+                for sub_bubble in gap.iter_years():
                     filter_doc: dict = {
                         self.code_name: code,
                         self.date_name: {'$gte': sub_bubble.min,
@@ -473,9 +472,9 @@ class DynColInterface(ColInterfaceBase):
                                            upsert=True)
                     assert r.acknowledged
                 # Log operation
-                status_bubble = status_bubble.carve(bubble)
-                self.manager.log.remove(code, field, bubble)
-            self.manager.status[code, field] = status_bubble
+                bubbles = bubbles.carve(gap)
+                self.manager.log.remove(code, field, gap)
+            self.manager.status[code, field] = bubbles
         self.manager.log.flush()
 
     def _auto_update(self, codes: list,
@@ -483,32 +482,31 @@ class DynColInterface(ColInterfaceBase):
                      enddate: datetime,
                      fields: list):
         def _work(param):
-            code, field, bubbles = param
+            code, field, bubbles, gaps = param
             logs = []
-            status_bubble = self.manager.status[code, field]
-            b_len = len(bubbles)-1
-            for i, bubble in enumerate(bubbles):
+            b_len = len(gaps)-1
+            for i, gap in enumerate(gaps):
                 # Download data
-                start, end = bubble.to_actualrange()
+                start, end = gap.to_actualrange()
                 df: DataFrame = self.feeder_func(code, field, start, end)
-                self._insert(df, code, field, bubble)
+                self._insert(df, code, field, gap)
                 # Update Bubbles in FieldStatus
                 if df.empty:
                     # To deal with data freq other than B or D
                     # Will fill in gaps even with no data returned, except the last one
                     if i != b_len:
-                        status_bubble = status_bubble.merge(bubble)
+                        bubbles = bubbles.merge(gap)
                 else:
                     dates = df[self.date_name]
                     date_s = min(dates).to_pydatetime()
                     date_e = (max(dates) + timedelta(1)).to_pydatetime()
                     # Log operation
-                    status_bubble = status_bubble.merge(
+                    bubbles = bubbles.merge(
                         TimeBubble(date_s, date_e))
                 log = self.manager.log._create_doc(
-                    code, field, bubble, 'INSERT')
+                    code, field, gap, 'INSERT')
                 logs.append(log)
-            self.manager.status[code, field] = status_bubble
+            self.manager.status[code, field] = bubbles
             return logs
 
         def create_index():
