@@ -134,7 +134,10 @@ class _DbBase:
 
     def _inti_col(self, colclass):
         class_name = colclass.__name__
-        colName = self.setting['DBSetting']['colSetting'][class_name]
+        try:
+            colName = self.setting['DBSetting']['colSetting'][class_name]
+        except:
+            colName = colclass.__name__
         col = self.db[colName]
         return colclass(col, self.setting['DBSetting'])
 
