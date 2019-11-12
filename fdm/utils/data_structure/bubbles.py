@@ -140,6 +140,13 @@ class Bubbles():
     def max(self):
         return self._bubbles[-1].max
 
+    @property
+    def isempty(self) -> bool:
+        if len(self._bubbles) == 0:
+            return True
+        else:
+            return False
+
     def gaps(self, bubble=None):
         '''Return gaps between bubbles.'''
         fullbubble = TimeBubble(self.min, self.max) \
