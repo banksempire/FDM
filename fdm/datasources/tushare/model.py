@@ -12,14 +12,14 @@ from .feeder import rebuilder, updater
 
 class _TushareCollectionBase(_CollectionBase):
     method_name = 'blank'
-    import tushare as ts
 
     def _rebuild(self, download_function):
+        import tushare as ts
         # Drop all data in collection
         self.interface.drop()
         print('{0} droped'.format(self.interface.full_name()))
         # Inititalize data source
-        pro = self.ts.pro_api()
+        pro = ts.pro_api()
         # Get stock list
         stock_list = DataFrame()
         for status in "LDP":
@@ -42,8 +42,9 @@ class _TushareCollectionBase(_CollectionBase):
         return 0
 
     def _update(self, download_function):
+        import tushare as ts
         # Inititalize data source
-        pro = self.ts.pro_api()
+        pro = ts.pro_api()
         # Get last date in DB
         lastdate = self.interface.lastdate()
         # Generate date range business day only
