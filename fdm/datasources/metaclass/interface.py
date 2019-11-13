@@ -28,9 +28,12 @@ class ColInterfaceBase():
     # Collection info related
     # ----------------------------------------
 
-    def list_subcollection_names(self, ascending: bool = True) -> list:
+    def list_subcollection_names(self, ascending: bool = True, include_property=False) -> list:
         '''Return all name of all subcollections.'''
-        property_name = ('FieldStatus', 'FieldStore', 'Log')
+        if include_property:
+            property_name = ''
+        else:
+            property_name = ('FieldStatus', 'FieldStore', 'Log')
         db = self.col.database
         res = []
         for name in db.list_collection_names():
@@ -40,9 +43,9 @@ class ColInterfaceBase():
         res.sort(reverse=not ascending)
         return res
 
-    def list_subcollections(self, ascending: bool = True):
+    def list_subcollections(self, ascending: bool = True, include_property=False):
         '''Return all subcolletions.'''
-        subcols = self.list_subcollection_names(ascending)
+        subcols = self.list_subcollection_names(ascending, include_property)
         res = []
         for subcol in subcols:
             res.append(self.col[subcol])
