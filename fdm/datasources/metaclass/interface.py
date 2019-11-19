@@ -575,3 +575,141 @@ class DynColInterface(ColInterfaceBase):
             for year, v in bulks.items():
                 subcol = self.col[year]
                 subcol.bulk_write(v, ordered=False)
+
+
+class StaColInterface(ColInterfaceBase):
+    '''ColInterface that deal with dynamic fields.'''
+
+    def __init__(self, col: Collection, feeder_func, setting: dict = None):
+        super().__init__(col, setting)
+        self.manager = Manager(col)
+        self.feeder_func = feeder_func
+
+    def query(self, codes: list,
+              fields: list,
+              startdate: datetime,
+              enddate: datetime,
+              force_update=False,
+              update_only=False,
+              skip_update=False) -> defaultdict:
+        # Convert string code to list
+        codes = self._to_upper(codes)
+        fields = self._to_upper(fields)
+        if force_update:
+            # Remove targeted data from database if deemed outdated
+            self.remove(codes, startdate, enddate, fields)
+            self._auto_update(codes, startdate, enddate, fields)
+
+        if not skip_update:
+            self._auto_update(codes, startdate, enddate, fields)
+
+        res: defaultdict = defaultdict(DataFrame)
+        if not update_only:
+            for field in fields:
+                subcol = self.col[field]
+                q_doc = {
+                    self.date_name: {'$gte': startdate, '$lte': enddate}
+                }
+                v = DataFrame(subcol.find(q_doc, codes+[self.date_name]))
+                res[field] = del_id(v)
+        return res
+
+    def remove(self, codes: list,
+               startdate: datetime,
+               enddate: datetime,
+               fields: list,):
+
+        params = self.manager.solve_remove_params(
+            codes, fields, startdate, enddate)
+
+        for code, field, bubbles, gaps in params:
+            for gap in gaps:
+
+                filter_doc: dict = {
+                    self.date_name: {'$gte': gap.min,
+                                     '$lt': gap.max},
+                }
+
+                subcol = self.col[field]
+                r = subcol.update_many(filter_doc,
+                                       {'$unset': {code: ''}},
+                                       upsert=True)
+                assert r.acknowledged
+                # Log operation
+                bubbles = bubbles.carve(gap)
+                self.manager.log.remove(code, field, gap)
+            self.manager.status[code, field] = bubbles
+        self.manager.log.flush()
+
+    def _auto_update(self, codes: list,
+                     startdate: datetime,
+                     enddate: datetime,
+                     fields: list):
+        def _work(param):
+            code, field, bubbles, gaps = param
+            logs = []
+            b_len = len(gaps)-1
+            for i, gap in enumerate(gaps):
+                # Download data
+                start, end = gap.to_actualrange()
+                df: DataFrame = self.feeder_func(code, field, start, end)
+                self._insert(df, code, field, gap)
+                # Update Bubbles in FieldStatus
+                if df.empty:
+                    # To deal with data freq other than B or D
+                    # Will fill in gaps even with no data returned, except the last one
+                    if i != b_len:
+                        bubbles = bubbles.merge(gap)
+                else:
+                    dates = df[self.date_name]
+                    date_s = min(dates).to_pydatetime()
+                    date_e = (max(dates) + timedelta(1)).to_pydatetime()
+                    # Log operation
+                    bubbles = bubbles.merge(
+                        TimeBubble(date_s, date_e))
+                log = self.manager.log._create_doc(
+                    code, field, gap, 'INSERT')
+                logs.append(log)
+            self.manager.status[code, field] = bubbles
+            return logs
+
+        def create_index():
+            for field in fields:
+                subcol = self.col[field]
+                subcol.create_index(self.date_name, unique=True)
+
+        create_index()
+        update_params = self.manager.solve_update_params(
+            codes, fields, startdate, enddate)
+        # multi thread version
+        '''with ThreadPoolExecutor() as executor:
+            logs = executor.map(_work, update_params)
+            for l in logs:
+            self.manager.log.cache += l
+            '''
+
+        # single thread version
+        for param in update_params:
+            self.manager.log.cache += _work(param)
+
+        self.manager.log.flush()
+
+    def _to_upper(self, items) -> list:
+        '''Convert codes to deal with multi type.'''
+        return [v.upper() for v in items]
+
+    def _insert(self, df: DataFrame, code, field, bubble):
+        '''Insert DataFrame into each sub collections accordingly.'''
+        def convert_2_bulks(df):
+            bulks = []
+            for _, v in df.iterrows():
+                q_doc = {self.date_name: v[self.date_name]}
+                u_doc = {v[self.code_name]: v[field]}
+                bulks.append(
+                    UpdateOne(q_doc, {'$set': u_doc}, upsert=True))
+            return bulks
+
+        if not df.empty:
+            bulks = convert_2_bulks(df)
+            subcol = self.col[field]
+            subcol.bulk_write(bulks, ordered=False)
