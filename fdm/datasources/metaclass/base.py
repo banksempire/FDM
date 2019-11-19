@@ -8,7 +8,7 @@ from pymongo import MongoClient
 
 from fdm.utils import client, config
 from fdm.utils.test import test_feeder_func
-from .interface import ColInterface, DynColInterface
+from .interface import ColInterface, StaColInterface
 
 
 class _CollectionBase:
@@ -55,27 +55,32 @@ class _DynCollectionBase:
     feeder_func = test_feeder_func
 
     def __init__(self, col: Collection, setting: dict):
-        self.interface = DynColInterface(col, self.feeder_func, setting)
+        self.interface = StaColInterface(col, self.feeder_func, setting)
 
     def query(self, codes,
               fields,
               startdate,
               enddate,
-              force_update=False
-              ) -> DataFrame:
+              force_update=False,
+              skip_update=False
+              ):
 
         # Prepare params
         codes, fields, startdate, enddate = self.convert_params(
             codes, fields, startdate, enddate)
 
         # Get data
-        df = self.interface.query(codes,
-                                  fields,
-                                  startdate,
-                                  enddate,
-                                  force_update
-                                  )
-        return df
+        res = self.interface.query(codes=codes,
+                                   fields=fields,
+                                   startdate=startdate,
+                                   enddate=enddate,
+                                   force_update=force_update,
+                                   skip_update=skip_update
+                                   )
+        if len(fields) == 1:
+            return res[fields[0]]
+        else:
+            return res
 
     def update(self, codes,
                fields,
@@ -89,11 +94,11 @@ class _DynCollectionBase:
             codes, fields, startdate, enddate)
 
         # Get data
-        self.interface.query(codes,
-                             fields,
-                             startdate,
-                             enddate,
-                             force_update,
+        self.interface.query(codes=codes,
+                             fields=fields,
+                             startdate=startdate,
+                             enddate=enddate,
+                             force_update=force_update,
                              update_only=True
                              )
 
