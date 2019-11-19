@@ -31,7 +31,7 @@ class ColInterfaceBase():
     def list_subcollection_names(self, ascending: bool = True, include_property=False) -> list:
         '''Return all name of all subcollections.'''
         if include_property:
-            property_name = ''
+            property_name = ()
         else:
             property_name = ('FieldStatus', 'FieldStore', 'Log')
         db = self.col.database
