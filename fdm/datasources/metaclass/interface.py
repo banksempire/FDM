@@ -593,8 +593,7 @@ class StaColInterface(ColInterfaceBase):
               update_only=False,
               skip_update=False) -> defaultdict:
         # Convert string code to list
-        codes = self._to_upper(codes)
-        fields = self._to_upper(fields)
+
         if force_update:
             # Remove targeted data from database if deemed outdated
             self.remove(codes, startdate, enddate, fields)
@@ -605,6 +604,8 @@ class StaColInterface(ColInterfaceBase):
 
         res: defaultdict = defaultdict(DataFrame)
         if not update_only:
+            codes = self._to_upper(codes)
+            fields = self._to_upper(fields)
             for field in fields:
                 subcol = self.col[field]
                 q_doc = {
@@ -618,6 +619,8 @@ class StaColInterface(ColInterfaceBase):
                startdate: datetime,
                enddate: datetime,
                fields: list,):
+        codes = self._to_upper(codes)
+        fields = self._to_upper(fields)
 
         params = self.manager.solve_remove_params(
             codes, fields, startdate, enddate)
@@ -704,12 +707,12 @@ class StaColInterface(ColInterfaceBase):
             bulks = []
             for _, v in df.iterrows():
                 q_doc = {self.date_name: v[self.date_name]}
-                u_doc = {v[self.code_name]: v[field]}
+                u_doc = {v[self.code_name].upper(): v[field]}
                 bulks.append(
                     UpdateOne(q_doc, {'$set': u_doc}, upsert=True))
             return bulks
 
         if not df.empty:
             bulks = convert_2_bulks(df)
-            subcol = self.col[field]
+            subcol = self.col[field.upper()]
             subcol.bulk_write(bulks, ordered=False)
