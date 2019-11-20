@@ -3,87 +3,100 @@ from datetime import datetime
 from pandas import DataFrame
 import pandas as pd
 
-
-def edb(codes, start, end) -> DataFrame:
-    '''Get edb data from wind'''
-    from WindPy import w
-    w.start()
-    # Unpack params
-    wind_codes = codes if isinstance(codes, str) else ','.join(codes)
-    startdate = start.strftime('%Y-%m-%d')\
-        if isinstance(start, datetime) else start
-    enddate = end.strftime('%Y-%m-%d')\
-        if isinstance(end, datetime) else end
-    # Download data
-    data = w.edb(wind_codes, startdate, enddate,
-                 "Fill=Previous")
-    if data.ErrorCode != 0:
-        print(data)
-        raise ValueError('Wind request failed!')
-    df = DataFrame(data.Data, columns=data.Times, index=data.Codes).T
-    # Transform data
-    df = df.unstack().reset_index()
-    df.columns = ['code', 'date', 'value']
-    df['date'] = pd.to_datetime(df['date'])
-    return df[(df['date'] <= end) & (df['date'] >= start)]
+# ------------------------------
+# Feeder Template
+# ------------------------------
 
 
-def wsd(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
-    # Init wind api
-    from WindPy import w
-    w.start()
-    # unpack params
-    try:
-        qfield, qparam = field.split('||')
-    except:
-        qfield = field
-        qparam = ''
+def feeder_factory(downloader, transformer):
+    def generic_func(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
+        # Init wind api
+        from WindPy import w
+        w.start()
+        # unpack params
+        data = downloader(w, field, code, start, end)
 
-    data = w.wsd(code, qfield, start, end, qparam)
+        if data.ErrorCode == 0:
+            # Transform data
+            return transformer(data, field, end, start, code)
+        elif data.ErrorCode == -40520007:
+            return DataFrame()
+        else:
+            print(data)
+            raise ValueError('Error code:{0}'.format(data.ErrorCode))
+    return generic_func
 
-    if data.ErrorCode == 0:
+
+# ------------------------------
+# Feeders
+# ------------------------------
+
+def wsd():
+    def wsd_downloader(w, field, code, start, end):
+        # unpack params
+        try:
+            qfield, qparam = field.split('||')
+        except:
+            qfield = field
+            qparam = ''
         # Download data
+        data = w.wsd(code, qfield, start, end, qparam)
+        return data
+
+    def wsd_transform(data, field, end, start, code):
+        # Transform data
+        df = DataFrame(data.Data, columns=data.Times, index=data.Codes).T
+        df = df.unstack().reset_index()
+        df.columns = ['code', 'date', field]
+        df['date'] = pd.to_datetime(df['date'])
+        return df[(df['date'] <= end) & (df['date'] >= start)]
+
+    return feeder_factory(wsd_downloader, wsd_transform)
+
+
+def edb():
+    def downloader(w, field, code, start, end):
+        # Unpack params
+        startdate = start.strftime('%Y-%m-%d')\
+            if isinstance(start, datetime) else start
+        enddate = end.strftime('%Y-%m-%d')\
+            if isinstance(end, datetime) else end
+        # Download data
+        data = w.edb(code, startdate, enddate,
+                     "Fill=Previous")
+        return data
+
+    def transformer(data, field, end, start, code):
+        # Transform data
         df = DataFrame(data.Data, columns=data.Times, index=data.Codes).T
         # Transform data
         df = df.unstack().reset_index()
         df.columns = ['code', 'date', field]
         df['date'] = pd.to_datetime(df['date'])
         return df[(df['date'] <= end) & (df['date'] >= start)]
-    elif data.ErrorCode == -40520007:
-        return DataFrame()
-    else:
-        print(data)
-        raise ValueError('Error code:{0}'.format(data.ErrorCode))
+
+    return feeder_factory(downloader, transformer)
 
 
 def wset_sector_constituent(sector_type: str):
-    def main(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
-        # Init wind api
-        from WindPy import w
-        w.start()
-
+    def downloader(w, field, code, start, end):
+        # Unpack params
         assert start == end
         param = "date={d};{t}={c}".format(
             d=start.strftime('%Y-%m-%d'), c=code, t=sector_type)
         data = w.wset("sectorconstituent", param)
+        return data
 
-        if data.ErrorCode == 0:
-            # Download data
-            df = DataFrame(data.Data, columns=data.Codes, index=data.Fields).T
-            if not df.empty:
-                value = df.to_json()
-                doc = {
-                    'code': code,
-                    'date': start,
-                    field: value
-                }
-                return DataFrame([doc])
-            else:
-                return DataFrame()
-        elif data.ErrorCode == -40520007:
-            return DataFrame()
-        else:
-            print(data)
-            raise ValueError('Error code:{0}'.format(data.ErrorCode))
+    def transformer(data, field, end, start, code):
+        # Transform data
+        df = DataFrame(data.Data, columns=data.Codes, index=data.Fields).T
+        if not df.empty:
+            value = df.to_json()
+            doc = {
+                'code': code,
+                'date': start,
+                field: value
+            }
+            return DataFrame([doc])
 
-    return main
+    return feeder_factory(downloader, transformer)
