@@ -33,9 +33,10 @@ def multi_dummy():
     print(datetime.now()-time)
 
 
-def test_wind():
-    codes = '000001.SZ,000002.SZ,000004.SZ,000005.SZ,000006.SZ,000007.SZ,000008.SZ,000009.SZ,000010.SZ,000011.SZ'.split(
+def test_wind_wsd():
+    codes = '000001.SZ,000002.SZ'.split(
         ',')
+    '000004.SZ,000005.SZ,000006.SZ,000007.SZ,000008.SZ,000009.SZ,000010.SZ,000011.SZ'
     wsd = fdm.Wind().wsd()
     time = datetime.now()
     print(wsd.query(codes, fields='close', startdate=datetime(
@@ -43,5 +44,15 @@ def test_wind():
     print(datetime.now()-time)
 
 
-multi_dummy()
+def test_wind_edb():
+    codes = 'M5567876'
+    edb = fdm.Wind().edb()
+    time = datetime.now()
+    print(edb.query(codes, startdate=datetime(
+        2018, 1, 1), enddate=datetime(2019, 4, 1)))
+    print(datetime.now()-time)
+
+
+test_wind_edb()
+#client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
 client.close()

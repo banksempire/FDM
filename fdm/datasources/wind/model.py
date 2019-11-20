@@ -23,45 +23,28 @@ class Wind(_DbBase):
         return self._inti_col(IndexConstituent)
 
 
-class EDB(_CollectionBase):
-    def update(self, codes=None, enddate: datetime = datetime.now()):
+class EDB(_DynCollectionBase):
+    feeder_func = edb()
 
-        if codes is None:
-            wind_codes = self.interface.distinct(self.interface.code_name)
-        elif isinstance(codes, str):
-            wind_codes = [codes]
-        else:
-            wind_codes = codes
+    def query(self, codes,
+              startdate,
+              enddate,
+              force_update=False,
+              skip_update=False
+              ):
 
-        for code, startdate in ((c, self.interface.lastdate_by_code(c)+timedelta(1))
-                                for c in wind_codes):
-            df = edb(code, startdate, enddate)
-            self.interface.insert_many(df)
-
-    def query(self, code_list_or_str=None,
-              date=None,
-              startdate: datetime = None,
-              enddate: datetime = None,
-              freq='D',
-              fields: list = None,
-              fillna=None,
-              autoupdate=True):
-
-        if autoupdate:
-            end = datetime.now() if enddate is None else enddate
-            self.update(code_list_or_str, end)
-        res = self.interface.query(code_list_or_str,
-                                   date,
-                                   startdate,
-                                   enddate,
-                                   freq,
-                                   fields,
-                                   fillna)
-        return res
+        data = super().query(codes=codes,
+                             startdate=startdate,
+                             enddate=enddate,
+                             fields='DATA',
+                             force_update=force_update,
+                             skip_update=skip_update
+                             )
+        return data
 
 
 class WSD(_DynCollectionBase):
-    feeder_func = wsd
+    feeder_func = wsd()
 
 # ----------------------------
 # WSET index/sector constituent
@@ -73,14 +56,16 @@ class _Constituent(_DynCollectionBase):
               fields,
               startdate,
               enddate,
-              force_update=False
+              force_update=False,
+              skip_update=False
               ):
 
         data = super().query(codes=codes,
                              startdate=startdate,
                              enddate=enddate,
                              fields='constituent',
-                             force_update=force_update
+                             force_update=force_update,
+                             skip_update=skip_update
                              )
         if not data.empty:
             df = pd.read_json(data['constituent'][0])
