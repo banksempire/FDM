@@ -678,32 +678,6 @@ class StaColInterface(ColInterfaceBase):
                 subcol = self.col[field]
                 subcol.create_index(self.date_name, unique=True)
 
-        def mt_work(code, field, bubbles, gaps, data):
-            logs = []
-            b_len = len(gaps)-1
-            for i, gap in enumerate(gaps):
-                # Download data
-                start, end = gap.to_actualrange()
-                self._insert(data, code, field, gap)
-                # Update Bubbles in FieldStatus
-                if data.empty:
-                    # To deal with data freq other than B or D
-                    # Will fill in gaps even with no data returned, except the last one
-                    if i != b_len:
-                        bubbles = bubbles.merge(gap)
-                else:
-                    dates = data[self.date_name]
-                    date_s = min(dates).to_pydatetime()
-                    date_e = (max(dates) + timedelta(1)).to_pydatetime()
-                    # Log operation
-                    bubbles = bubbles.merge(
-                        TimeBubble(date_s, date_e))
-                log = self.manager.log._create_doc(
-                    code, field, gap, 'INSERT')
-                logs.append(log)
-            self.manager.status[code, field] = bubbles
-            return logs
-
         create_index()
         update_params = self.manager.solve_update_params(
             codes, fields, startdate, enddate)
@@ -713,38 +687,10 @@ class StaColInterface(ColInterfaceBase):
             for l in logs:
             self.manager.log.cache += l
             '''
-        def insert_data(df, code, field, bubble):
-            '''Insert DataFrame into each sub collections accordingly.'''
-            def convert_2_bulks(df):
-                bulks = []
-                for _, v in df.iterrows():
-                    q_doc = {self.date_name: v[self.date_name]}
-                    u_doc = {v[self.code_name]: v[field]}
-                    bulks.append(
-                        UpdateOne(q_doc, {'$set': u_doc}, upsert=True))
-                return bulks
-
-            if not df.empty:
-                bulks = convert_2_bulks(df)
-                subcol = self.col[field]
-                subcol.bulk_write(bulks, ordered=False)
 
         # single thread version
         for param in update_params:
             self.manager.log.cache += _work(param)
-
-        # new multi-thread version
-        with ThreadPoolExecutor() as executor:
-            for code, field, bubbles, gaps in update_params:
-                logs = []
-                b_len = len(gaps)-1
-                for i, gap in enumerate(gaps):
-                    # Download data
-                    start, end = gap.to_actualrange()
-                    df: DataFrame = self.feeder_func(code, field, start, end)
-                    #_params = (df, code, field, gap)
-                    # Run in other thread
-                    executor.submit(insert_data, df, code, field, gap)
 
         self.manager.log.flush()
 
