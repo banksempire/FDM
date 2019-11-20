@@ -53,25 +53,21 @@ class WSD(_DynCollectionBase):
 
 class _Constituent(_DynCollectionBase):
     def query(self, codes,
-              fields,
-              startdate,
-              enddate,
+              date,
               force_update=False,
               skip_update=False
               ):
-
+        assert isinstance(codes, str)
         data = super().query(codes=codes,
-                             startdate=startdate,
-                             enddate=enddate,
+                             startdate=date,
+                             enddate=date,
                              fields='constituent',
                              force_update=force_update,
                              skip_update=skip_update
                              )
-        if not data.empty:
-            df = pd.read_json(data['constituent'][0])
+        if isinstance(data, pd.DataFrame):
+            df = pd.read_json(data[codes.upper()][0])
             return df
-        else:
-            return data
 
     def update(self, codes,
                fields,

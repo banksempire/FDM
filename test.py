@@ -53,6 +53,14 @@ def test_wind_edb():
     print(datetime.now()-time)
 
 
-test_wind_edb()
+def test_wind_wset_cons():
+    sec = fdm.Wind().sector_constituent()
+    date = datetime(2019, 11, 8)
+    time = datetime.now()
+    print(sec.query('a001010100000000', date))
+    print(datetime.now() - time)
+
+
+test_wind_wset_cons()
 #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
 client.close()
