@@ -611,8 +611,10 @@ class StaColInterface(ColInterfaceBase):
                 q_doc = {
                     self.date_name: {'$gte': startdate, '$lte': enddate}
                 }
-                v = DataFrame(subcol.find(q_doc, codes+[self.date_name]))
-                res[field] = del_id(v)
+                v = DataFrame(subcol.find(q_doc, codes + [self.date_name]))
+                df = del_id(v)
+                df.columns = [c.replace('~', '.') for c in df.columns]
+                res[field] = df
         return res
 
     def remove(self, codes: list,
@@ -677,7 +679,7 @@ class StaColInterface(ColInterfaceBase):
             return logs
 
         def create_index():
-            for field in fields:
+            for field in self._to_upper(fields):
                 subcol = self.col[field]
                 subcol.create_index(self.date_name, unique=True)
 
@@ -699,7 +701,7 @@ class StaColInterface(ColInterfaceBase):
 
     def _to_upper(self, items) -> list:
         '''Convert codes to deal with multi type.'''
-        return [v.upper() for v in items]
+        return [v.upper().replace('.', '~') for v in items]
 
     def _insert(self, df: DataFrame, code, field, bubble):
         '''Insert DataFrame into each sub collections accordingly.'''
@@ -707,12 +709,13 @@ class StaColInterface(ColInterfaceBase):
             bulks = []
             for _, v in df.iterrows():
                 q_doc = {self.date_name: v[self.date_name]}
-                u_doc = {v[self.code_name].upper(): v[field]}
+                code_name = code.upper().replace('.', '~')
+                u_doc = {code_name: v[field]}
                 bulks.append(
                     UpdateOne(q_doc, {'$set': u_doc}, upsert=True))
             return bulks
 
         if not df.empty:
             bulks = convert_2_bulks(df)
-            subcol = self.col[field.upper()]
+            subcol = self.col[field.upper().replace('.', '~')]
             subcol.bulk_write(bulks, ordered=False)

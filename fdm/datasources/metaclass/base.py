@@ -78,7 +78,7 @@ class _DynCollectionBase:
                                    skip_update=skip_update
                                    )
         if len(fields) == 1:
-            return res[fields[0]]
+            return res[fields[0].upper().replace('.', '~')]
         else:
             return res
 
