@@ -768,11 +768,10 @@ class StaColInterface(ColInterfaceBase):
         # single thread version
         '''for param in update_params:
             self.manager.log.cache += _work(param) '''
-        # Write to db
-        with ThreadPoolExecutor(max_workers=4) as exe:
+        # Multithreaded Write to db
+        with ThreadPoolExecutor(max_workers=2) as exe:
             for batches in gen_data_by_batches(update_params, 500):
                 exe.submit(write_batch_to_db, batches)
-                # write_batch_to_db(batches)
 
         self.manager.log.flush()
 
