@@ -1,0 +1,2 @@
+class FeederFunctionError(Exception):
+    pass

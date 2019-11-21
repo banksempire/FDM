@@ -3,6 +3,8 @@ from datetime import datetime
 from pandas import DataFrame
 import pandas as pd
 
+from fdm.utils.exceptions import FeederFunctionError
+
 # ------------------------------
 # Feeder Template
 # ------------------------------
@@ -23,7 +25,7 @@ def feeder_factory(downloader, transformer):
             return DataFrame()
         else:
             print(data)
-            raise ValueError('Error code:{0}'.format(data.ErrorCode))
+            raise FeederFunctionError('Error code:{0}'.format(data.ErrorCode))
     return generic_func
 
 
