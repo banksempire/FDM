@@ -771,7 +771,6 @@ class StaColInterface(ColInterfaceBase):
         # Write to db
         with ThreadPoolExecutor(max_workers=4) as exe:
             for batches in gen_data_by_batches(update_params, 500):
-                # print(batches)
                 exe.submit(write_batch_to_db, batches)
                 # write_batch_to_db(batches)
 
