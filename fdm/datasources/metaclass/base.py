@@ -102,6 +102,15 @@ class _DynCollectionBase:
                              update_only=True
                              )
 
+    def remove(self, codes,
+               fields,
+               startdate,
+               enddate):
+        codes, fields, startdate, enddate = self.convert_params(
+            codes, fields, startdate, enddate)
+
+        self.interface.remove(codes, startdate, enddate, fields)
+
     def convert_params(self, codes, fields, startdate, enddate):
         def convert_dt(df):
             return datetime.strptime(df, '%Y-%m-%d')
