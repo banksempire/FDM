@@ -39,8 +39,10 @@ def test_wind_wsd():
     '000004.SZ,000005.SZ,000006.SZ,000007.SZ,000008.SZ,000009.SZ,000010.SZ,000011.SZ'
     wsd = fdm.Wind().wsd()
     time = datetime.now()
-    print(wsd.query(codes, fields='close', startdate=datetime(
-        2018, 1, 1), enddate=datetime(2019, 4, 1)))
+    '''wsd.remove(codes, fields='close||PriceAdj=B', startdate=datetime(
+        2018, 1, 1), enddate=datetime(2019, 4, 1))'''
+    print(wsd.query(codes, fields='close||PriceAdj=B', startdate=datetime(
+        2019, 3, 15), enddate=datetime(2019, 4, 1), force_update=True))
     print(datetime.now()-time)
 
 
@@ -61,6 +63,7 @@ def test_wind_wset_cons():
     print(datetime.now() - time)
 
 
-test_wind_wset_cons()
-#client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
-client.close()
+if __name__ == '__main__':
+    test_wind_wsd()
+    #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
+    client.close()

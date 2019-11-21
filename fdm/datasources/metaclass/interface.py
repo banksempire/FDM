@@ -12,6 +12,7 @@ from pymongo import MongoClient, UpdateOne
 from .manager import Manager
 from fdm.utils.data_structure.bubbles import TimeBubble
 from fdm.utils.tools import del_id
+from fdm.utils.exceptions import FeederFunctionError
 
 
 class ColInterfaceBase():
@@ -621,9 +622,8 @@ class StaColInterface(ColInterfaceBase):
                startdate: datetime,
                enddate: datetime,
                fields: list,):
-        codes = self._to_upper(codes)
-        fields = self._to_upper(fields)
-
+        #codes = self._to_upper(codes)
+        #fields = self._to_upper(fields)
         params = self.manager.solve_remove_params(
             codes, fields, startdate, enddate)
 
@@ -635,7 +635,7 @@ class StaColInterface(ColInterfaceBase):
                                      '$lt': gap.max},
                 }
 
-                subcol = self.col[field]
+                subcol = self.col[field.upper().replace('.', '~')]
                 r = subcol.update_many(filter_doc,
                                        {'$unset': {code: ''}},
                                        upsert=True)
@@ -678,6 +678,84 @@ class StaColInterface(ColInterfaceBase):
             self.manager.status[code, field] = bubbles
             return logs
 
+        def filling_gap(bubbles, df, gap, islast):
+            if df.empty:
+                # To deal with data freq other than B or D
+                # Will fill in gaps even with no data returned, except the last one
+                if not islast:
+                    bubbles = bubbles.merge(gap)
+            else:
+                dates = df[self.date_name]
+                date_s = min(dates).to_pydatetime()
+                date_e = (max(dates) + timedelta(1)).to_pydatetime()
+                bubbles = bubbles.merge(
+                    TimeBubble(date_s, date_e))
+            return bubbles
+
+        def binding_data(l: DataFrame, r: DataFrame, code: str, field: str):
+            if not r.empty:
+                # Convert format
+                r = r.set_index(self.date_name)[[field]]
+                r.columns = [code]
+                try:
+                    # Try join the data first
+                    l = l.join(r, how='outer')
+                except ValueError:
+                    # If duplicated columns found
+                    comb = l[code].combine_first(r[code])
+                    l.loc[:, code] = comb
+                return l
+
+        def gen_data_by_batches(update_params, batch_size=500):
+            result = defaultdict(DataFrame)
+            count = 0
+            try:
+                for param in update_params:
+                    code, field, bubbles, gaps = param
+                    b_len = len(gaps)-1
+                    for i, gap in enumerate(gaps):
+                        # Download data
+                        start, end = gap.to_actualrange()
+                        df: DataFrame = self.feeder_func(
+                            code, field, start, end)
+                        # Binding data
+                        result[field] = binding_data(
+                            result[field], df, code, field)
+                        count += 1
+                        # recording operation stuff
+                        islast = i == b_len
+                        bubbles = filling_gap(bubbles, df, gap, islast)
+                        log = self.manager.log._create_doc(
+                            code, field, gap, 'INSERT')
+                        self.manager.log.cache.append(log)
+                        # yield batches
+                        if count == batch_size:
+                            count = 0
+                            yield result
+                            result = defaultdict(DataFrame)
+                    self.manager.status[code, field] = bubbles
+                if len(result) != 0:
+                    yield result
+            except FeederFunctionError:
+                self.manager.status[code, field] = bubbles
+                yield result
+
+        def write_batch_to_db(batches):
+            def convert_2_bulks(df):
+                bulks = []
+                for i, v in df.iterrows():
+                    q_doc = {self.date_name: i.to_pydatetime()}
+                    u_doc = v.dropna().to_dict()
+                    bulks.append(
+                        UpdateOne(q_doc, {'$set': u_doc}, upsert=True))
+                return bulks
+
+            for field, df in batches.items():
+                df.columns = self._to_upper(df.columns)
+                bulks = convert_2_bulks(df)
+                subcol = self.col[field.upper().replace('.', '~')]
+                subcol.bulk_write(bulks, ordered=False)
+
         def create_index():
             for field in self._to_upper(fields):
                 subcol = self.col[field]
@@ -686,16 +764,16 @@ class StaColInterface(ColInterfaceBase):
         create_index()
         update_params = self.manager.solve_update_params(
             codes, fields, startdate, enddate)
-        # multi thread version
-        '''with ThreadPoolExecutor() as executor:
-            logs = executor.map(_work, update_params)
-            for l in logs:
-            self.manager.log.cache += l
-            '''
 
         # single thread version
-        for param in update_params:
-            self.manager.log.cache += _work(param)
+        '''for param in update_params:
+            self.manager.log.cache += _work(param) '''
+        # Write to db
+        with ThreadPoolExecutor(max_workers=4) as exe:
+            for batches in gen_data_by_batches(update_params, 500):
+                # print(batches)
+                exe.submit(write_batch_to_db, batches)
+                # write_batch_to_db(batches)
 
         self.manager.log.flush()
 
