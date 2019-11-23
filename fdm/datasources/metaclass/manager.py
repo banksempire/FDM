@@ -90,6 +90,10 @@ class FieldStatus():
         codes, fields = key
         codes = [codes] if isinstance(codes, str) else codes
         fields = [fields] if isinstance(fields, str) else fields
+
+        codes = self._to_upper(codes)
+        fields = self._to_upper(fields)
+
         self.fields.append(fields)
         if isinstance(key[0], str) and isinstance(key[1], str):
             r = self.col.find_one({'code': codes[0]}, fields)
@@ -109,6 +113,10 @@ class FieldStatus():
 
     def __setitem__(self, key, value: Bubbles):
         code, field = key
+
+        code = code.upper().replace('.', '~')
+        field = field.upper().replace('.', '~')
+
         self.fields.append(field)
         if code in self.col.distinct('code'):
             r = self.col.update_one({'code': code},
@@ -120,6 +128,10 @@ class FieldStatus():
 
     def __delitem__(self, key):
         code, fields = key
+
+        code = code.upper().replace('.', '~')
+        fields = fields.upper().replace('.', '~')
+
         if code in self.col.distinct('code'):
             if isinstance(fields, str):
                 fields = [fields]
@@ -129,6 +141,9 @@ class FieldStatus():
             assert r.acknowledged
         else:
             raise KeyError('Code {} not found in database.'.format(code))
+
+    def _to_upper(self, items):
+        return [v.upper().replace('.', '~') for v in items]
 
 
 class Logger():
