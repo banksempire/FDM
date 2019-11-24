@@ -1,3 +1,6 @@
+from datetime import datetime
+from collections import defaultdict
+
 import pandas as pd
 from pandas import DataFrame
 
@@ -31,3 +34,33 @@ def updater(method, max_retry=10):
             df['trade_date'], format='%Y%m%d')
         return df
     return downloader
+
+
+TUSHARE_CACHE = defaultdict(DataFrame)
+
+
+def daily(cls, code: str, field: str, start: datetime, end: datetime):
+    @retry(10)
+    def downloader(code, start, end):
+        import tushare as ts
+        pro = ts.pro_api()
+        df = pro.daily(ts_code=code,
+                       start_date=start.strftime(
+                           '%Y%m%d'),
+                       end_date=end.strftime('%Y%m%d'))
+        return df
+
+    if TUSHARE_CACHE['daily', code].empty:
+        TUSHARE_CACHE['daily', code] = downloader(
+            code, start, end)
+
+    data = TUSHARE_CACHE['daily', code]
+    res = data[['ts_code',
+                'trade_date',
+                field]].copy()
+
+    del data[field]
+    # delete from cache if all data has been returned
+    if data.shape[1] == 2:
+        del TUSHARE_CACHE['daily', code]
+    return res

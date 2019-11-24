@@ -1,4 +1,4 @@
-from datetime import datetime
+'''from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 from random import randint
@@ -39,8 +39,6 @@ def test_wind_wsd():
     '000004.SZ,000005.SZ,000006.SZ,000007.SZ,000008.SZ,000009.SZ,000010.SZ,000011.SZ'
     wsd = fdm.Wind().wsd()
     time = datetime.now()
-    '''wsd.remove(codes, fields='close||PriceAdj=B', startdate=datetime(
-        2018, 1, 1), enddate=datetime(2019, 4, 1))'''
     print(wsd.query(codes, fields='close||PriceAdj=B', startdate=datetime(
         2019, 3, 15), enddate=datetime(2019, 4, 1), force_update=True))
     print(datetime.now()-time)
@@ -66,4 +64,45 @@ def test_wind_wset_cons():
 if __name__ == '__main__':
     test_wind_wsd()
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
-    client.close()
+    client.close()'''
+
+from datetime import datetime
+from collections import defaultdict
+
+from pandas import DataFrame
+
+TUSHARE_CACHE = defaultdict(DataFrame)
+
+
+def daily(cls, code: str, field: str, start: datetime, end: datetime):
+    import tushare as ts
+    pro = ts.pro_api()
+    if TUSHARE_CACHE['daily', code].empty:
+        TUSHARE_CACHE['daily', code] = pro.daily(ts_code=code,
+                                                 start_date=start.strftime(
+                                                     '%Y%m%d'),
+                                                 end_date=end.strftime('%Y%m%d'))
+    data = TUSHARE_CACHE['daily', code]
+
+    res = data[['ts_code',
+                'trade_date',
+                field]].copy()
+
+    del data[field]
+    # delete from cache if all data has been returned
+    if data.shape[1] == 2:
+        del TUSHARE_CACHE['daily', code]
+    return res
+
+
+print(daily('', '000001.SZ', 'close',
+            datetime(2018, 1, 1),
+            datetime(2019, 1, 1)))
+
+print(daily('', '000001.SZ', 'open',
+            datetime(2018, 1, 1),
+            datetime(2019, 1, 1)))
+print(daily('', '000001.SZ', 'high',
+            datetime(2018, 1, 1),
+            datetime(2019, 1, 1)))
+print(TUSHARE_CACHE)
