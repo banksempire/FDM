@@ -1,5 +1,6 @@
 from datetime import datetime
 from collections import defaultdict
+from time import sleep
 
 import pandas as pd
 from pandas import DataFrame
@@ -43,7 +44,7 @@ tushare_cache = defaultdict(DataFrame)
 # -------------------------------
 
 
-def template(func_name, min_columns_count):
+def trading_temp(func_name, min_columns_count):
     def func(cls, code: str, field: str, start: datetime, end: datetime):
         '''
         Feeder function for tushare {} info.'''.format(func_name)
@@ -56,6 +57,7 @@ def template(func_name, min_columns_count):
                                          start_date=start.strftime(
                                              '%Y%m%d'),
                                          end_date=end.strftime('%Y%m%d'))
+            sleep(0.2)
             df['trade_date'] = pd.to_datetime(df['trade_date'])
             df = df.rename(columns={'trade_date': 'date', 'ts_code': 'code'})
             return df
@@ -76,10 +78,50 @@ def template(func_name, min_columns_count):
 
 
 # Daily pricing data
-daily = template('daily', 2)
+daily = trading_temp('daily', 2)
 
 # Daily adjust factor
-adj_factor = template('adj_factor', 2)
+adj_factor = trading_temp('adj_factor', 2)
 
 # Daily trading info
-daily_basic = template('daily_basic', 2)
+daily_basic = trading_temp('daily_basic', 2)
+
+
+# -------------------------------
+# Financial Statement Info
+# -------------------------------
+
+
+def fs_temp(func_name, min_columns_count):
+    def func(cls, code: str, field: str, start: datetime, end: datetime):
+        '''
+        Feeder function for tushare {} info.'''.format(func_name)
+
+        @retry(10)
+        def downloader(code, start, end):
+            import tushare as ts
+            pro = ts.pro_api()
+            df = getattr(pro, func_name)(ts_code=code,
+                                         start_date=start.strftime(
+                                             '%Y%m%d'),
+                                         end_date=end.strftime('%Y%m%d'))
+            sleep(0.2)
+            columns = ('ann_date', 'f_ann_date', 'end_date')
+            for column in columns:
+                df[column] = pd.to_datetime(df[column])
+            df = df.rename(columns={'end_date': 'date', 'ts_code': 'code'})
+            return df
+        # If tushare_cache don't have the data then download
+        if tushare_cache[func_name, code].empty:
+            tushare_cache[func_name, code] = downloader(
+                code, start, end)
+        # Get result
+        data = tushare_cache[func_name, code]
+        res = data[['code', 'date', field]].copy()
+        # Remove returned data
+        del data[field]
+        # delete from cache if all data has been returned
+        if data.shape[1] == min_columns_count:
+            del tushare_cache[func_name, code]
+        return res
+    return func
