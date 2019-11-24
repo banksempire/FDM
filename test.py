@@ -62,9 +62,12 @@ def test_wind_wset_cons():
 
 
 def test_tushare_income():
-    ts = fdm.Tushare()
-    inc = ts.income()
-    inc.update('000001.SZ',
+    import tushare as ts
+    pro = ts.pro_api()
+    codes = list(pro.stock_basic()['ts_code'])
+    tus = fdm.Tushare()
+    inc = tus.income()
+    inc.update(codes,
                datetime(1990, 1, 1),
                datetime(2020, 1, 1))
 
