@@ -112,7 +112,7 @@ def fs_temp(func_name, min_columns_count):
                     df[column] = pd.to_datetime(df[column])
                 except:
                     pass
-            df = df.rename(columns={'end_date': 'date', 'ts_code': 'code'})
+            df = df.rename(columns={'end_date': 'trade_date'})
             return df
         # If tushare_cache don't have the data then download
         if tushare_cache[func_name, code].empty:
