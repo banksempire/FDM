@@ -40,6 +40,9 @@ tushare_cache = defaultdict(DataFrame)
 
 
 def daily(cls, code: str, field: str, start: datetime, end: datetime):
+    '''
+    Tushare daily trading price info.
+    '''
     @retry(10)
     def downloader(code, start, end):
         import tushare as ts
@@ -68,6 +71,9 @@ def daily(cls, code: str, field: str, start: datetime, end: datetime):
 
 
 def adj_factor(cls, code: str, field: str, start: datetime, end: datetime):
+    '''
+    Tushare price adjust factor.
+    '''
     @retry(10)
     def downloader(code, start, end):
         import tushare as ts
