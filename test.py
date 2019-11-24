@@ -71,38 +71,47 @@ from collections import defaultdict
 
 from pandas import DataFrame
 
-TUSHARE_CACHE = defaultdict(DataFrame)
+tushare_cache = defaultdict(DataFrame)
+
+# -------------------------------
+# Feeder Template
+# -------------------------------
 
 
-def daily(cls, code: str, field: str, start: datetime, end: datetime):
-    import tushare as ts
-    pro = ts.pro_api()
-    if TUSHARE_CACHE['daily', code].empty:
-        TUSHARE_CACHE['daily', code] = pro.daily(ts_code=code,
-                                                 start_date=start.strftime(
-                                                     '%Y%m%d'),
-                                                 end_date=end.strftime('%Y%m%d'))
-    data = TUSHARE_CACHE['daily', code]
+def Template(func_name, min_columns_count):
+    def func(cls, code: str, field: str, start: datetime, end: datetime):
+        '''
+        Tushare daily trading price info.
+        '''
 
-    res = data[['ts_code',
-                'trade_date',
-                field]].copy()
+        def downloader(code, start, end):
+            import tushare as ts
+            pro = ts.pro_api()
+            df = getattr(pro, func_name)(ts_code=code,
+                                         start_date=start.strftime(
+                                             '%Y%m%d'),
+                                         end_date=end.strftime('%Y%m%d'))
+            return df
 
-    del data[field]
-    # delete from cache if all data has been returned
-    if data.shape[1] == 2:
-        del TUSHARE_CACHE['daily', code]
-    return res
+        if tushare_cache[func_name, code].empty:
+            tushare_cache[func_name, code] = downloader(
+                code, start, end)
+
+        data = tushare_cache[func_name, code]
+        res = data[['ts_code',
+                    'trade_date',
+                    field]].copy()
+
+        del data[field]
+        # delete from cache if all data has been returned
+        if data.shape[1] == min_columns_count:
+            del tushare_cache[func_name, code]
+        return res
+    return func
 
 
-print(daily('', '000001.SZ', 'close',
-            datetime(2018, 1, 1),
-            datetime(2019, 1, 1)))
+print(Template('daily', 2)('', '000001.SZ', 'close',
+                           datetime(2018, 1, 1),
+                           datetime(2019, 1, 1)))
 
-print(daily('', '000001.SZ', 'open',
-            datetime(2018, 1, 1),
-            datetime(2019, 1, 1)))
-print(daily('', '000001.SZ', 'high',
-            datetime(2018, 1, 1),
-            datetime(2019, 1, 1)))
-print(TUSHARE_CACHE)
+print(tushare_cache)

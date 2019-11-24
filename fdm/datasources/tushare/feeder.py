@@ -38,6 +38,42 @@ def updater(method, max_retry=10):
 
 tushare_cache = defaultdict(DataFrame)
 
+# -------------------------------
+# Feeder Template
+# -------------------------------
+
+
+def template(func_name, min_columns_count):
+    def func(cls, code: str, field: str, start: datetime, end: datetime):
+        '''
+        Tushare daily trading price info.
+        '''
+        @retry(10)
+        def downloader(code, start, end):
+            import tushare as ts
+            pro = ts.pro_api()
+            df = getattr(pro, func_name)(ts_code=code,
+                                         start_date=start.strftime(
+                                             '%Y%m%d'),
+                                         end_date=end.strftime('%Y%m%d'))
+            return df
+
+        if tushare_cache[func_name, code].empty:
+            tushare_cache[func_name, code] = downloader(
+                code, start, end)
+
+        data = tushare_cache[func_name, code]
+        res = data[['ts_code',
+                    'trade_date',
+                    field]].copy()
+
+        del data[field]
+        # delete from cache if all data has been returned
+        if data.shape[1] == min_columns_count:
+            del tushare_cache[func_name, code]
+        return res
+    return func
+
 
 def daily(cls, code: str, field: str, start: datetime, end: datetime):
     '''
