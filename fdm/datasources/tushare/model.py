@@ -136,6 +136,17 @@ class _FSTemp(_DynCollectionBase):
                        enddate=enddate,
                        force_update=force_update)
 
+    def query(self, codes,
+              fields,
+              startdate,
+              enddate,
+              ):
+        super().query(codes=codes,
+                      fields=fields,
+                      startdate=startdate,
+                      enddate=enddate,
+                      skip_update=True)
+
 
 class IncomeStatement(_FSTemp):
     feeder_func = fs_temp('income', 2)
