@@ -45,6 +45,9 @@ tushare_cache = defaultdict(DataFrame)
 
 def template(func_name, min_columns_count):
     def func(cls, code: str, field: str, start: datetime, end: datetime):
+        '''
+        Feeder function for tushare {} info.'''.format(func_name)
+
         @retry(10)
         def downloader(code, start, end):
             import tushare as ts
@@ -54,16 +57,16 @@ def template(func_name, min_columns_count):
                                              '%Y%m%d'),
                                          end_date=end.strftime('%Y%m%d'))
             return df
-
+        # If tushare_cache don't have the data then download
         if tushare_cache[func_name, code].empty:
             tushare_cache[func_name, code] = downloader(
                 code, start, end)
-
+        # Get result
         data = tushare_cache[func_name, code]
         res = data[['ts_code',
                     'trade_date',
                     field]].copy()
-
+        # Remove returned data
         del data[field]
         # delete from cache if all data has been returned
         if data.shape[1] == min_columns_count:
