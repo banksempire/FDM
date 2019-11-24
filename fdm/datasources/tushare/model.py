@@ -61,7 +61,7 @@ class _TushareCollectionBase(_CollectionBase):
             sleep(0.6)
         return 0
 
-    def rebuild(self, buildindex=False):
+    def rebuild(self, buildindex=True):
         self._rebuild(rebuilder(self.method_name))
         if buildindex:
             self.interface.create_indexs(
@@ -87,9 +87,6 @@ class Tushare(_DbBase):
 
 class DailyBasic(_TushareCollectionBase):
     method_name = 'daily_basic'
-
-    def rebuild(self, buildindex=True):
-        return super().rebuild(buildindex)
 
 
 class DailyPrice(_TushareCollectionBase):
