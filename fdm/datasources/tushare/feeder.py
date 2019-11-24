@@ -39,7 +39,7 @@ def updater(method, max_retry=10):
 tushare_cache = defaultdict(DataFrame)
 
 # -------------------------------
-# Feeder Template
+# Trading Info
 # -------------------------------
 
 
@@ -56,6 +56,8 @@ def template(func_name, min_columns_count):
                                          start_date=start.strftime(
                                              '%Y%m%d'),
                                          end_date=end.strftime('%Y%m%d'))
+            df['trade_date'] = pd.to_datetime(df['trade_date'])
+            df = df.rename(columns={'trade_date': 'date', 'ts_code': 'code'})
             return df
         # If tushare_cache don't have the data then download
         if tushare_cache[func_name, code].empty:
@@ -63,9 +65,7 @@ def template(func_name, min_columns_count):
                 code, start, end)
         # Get result
         data = tushare_cache[func_name, code]
-        res = data[['ts_code',
-                    'trade_date',
-                    field]].copy()
+        res = data[['code', 'date', field]].copy()
         # Remove returned data
         del data[field]
         # delete from cache if all data has been returned
@@ -75,8 +75,11 @@ def template(func_name, min_columns_count):
     return func
 
 
+# Daily pricing data
 daily = template('daily', 2)
 
+# Daily adjust factor
 adj_factor = template('adj_factor', 2)
 
+# Daily trading info
 daily_basic = template('daily_basic', 2)
