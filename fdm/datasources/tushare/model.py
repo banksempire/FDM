@@ -10,6 +10,11 @@ from fdm.datasources.metaclass import (_CollectionBase,
                                        _DbBase,
                                        _DynCollectionBase)
 from .feeder import rebuilder, updater, fs_temp
+from .fields import *
+
+# -------------------------------
+# Tushare base class
+# -------------------------------
 
 
 class _TushareCollectionBase(_CollectionBase):
@@ -86,6 +91,19 @@ class Tushare(_DbBase):
     def daily_adj(self):
         return self._inti_col(DailyAdjFactor)
 
+    def income(self):
+        return self._inti_col(IncomeStatement)
+
+    def balance_sheet(self):
+        return self._inti_col(BalanceSheet)
+
+    def cash_flow(self):
+        return self._inti_col(CFStatement)
+
+# -------------------------------
+# Trading info
+# -------------------------------
+
 
 class DailyBasic(_TushareCollectionBase):
     method_name = 'daily_basic'
@@ -103,13 +121,32 @@ class DailyAdjFactor(_TushareCollectionBase):
 # --------------------------------
 
 
-class IncomeStatement(_DynCollectionBase):
+class _FSTemp(_DynCollectionBase):
+    feeder_func = None
+    fields = None
+
+    def update(self, codes,
+               startdate,
+               enddate,
+               force_update=False
+               ):
+        super().update(codes=codes,
+                       fields=self.fields,
+                       startdate=startdate,
+                       enddate=enddate,
+                       force_update=force_update)
+
+
+class IncomeStatement(_FSTemp):
     feeder_func = fs_temp('income', 2)
+    fields = income
 
 
-class BalanceSheet(_DynCollectionBase):
+class BalanceSheet(_FSTemp):
     feeder_func = fs_temp('balancesheet', 2)
+    fields = balance
 
 
-class CFStatement(_DynCollectionBase):
+class CFStatement(_FSTemp):
     feeder_func = fs_temp('cashflow', 2)
+    fields = cashflow
