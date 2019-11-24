@@ -120,7 +120,7 @@ def fs_temp(func_name, min_columns_count):
                 code, start, end)
         # Get result
         data = tushare_cache[func_name, code]
-        res = data[['code', 'date', field]].copy()
+        res = data[['ts_code', 'trade_date', field]].copy()
         # Remove returned data
         del data[field]
         # delete from cache if all data has been returned
