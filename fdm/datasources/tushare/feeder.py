@@ -50,11 +50,12 @@ def daily(cls, code: str, field: str, start: datetime, end: datetime):
                        end_date=end.strftime('%Y%m%d'))
         return df
 
-    if tushare_cache['daily', code].empty:
-        tushare_cache['daily', code] = downloader(
+    cache_name = 'daily'
+    if tushare_cache[cache_name, code].empty:
+        tushare_cache[cache_name, code] = downloader(
             code, start, end)
 
-    data = tushare_cache['daily', code]
+    data = tushare_cache[cache_name, code]
     res = data[['ts_code',
                 'trade_date',
                 field]].copy()
@@ -62,5 +63,33 @@ def daily(cls, code: str, field: str, start: datetime, end: datetime):
     del data[field]
     # delete from cache if all data has been returned
     if data.shape[1] == 2:
-        del tushare_cache['daily', code]
+        del tushare_cache[cache_name, code]
+    return res
+
+
+def adj_factor(cls, code: str, field: str, start: datetime, end: datetime):
+    @retry(10)
+    def downloader(code, start, end):
+        import tushare as ts
+        pro = ts.pro_api()
+        df = pro.adj_factor(ts_code=code,
+                            start_date=start.strftime(
+                                '%Y%m%d'),
+                            end_date=end.strftime('%Y%m%d'))
+        return df
+
+    cache_name = 'adj_factor'
+    if tushare_cache[cache_name, code].empty:
+        tushare_cache[cache_name, code] = downloader(
+            code, start, end)
+
+    data = tushare_cache[cache_name, code]
+    res = data[['ts_code',
+                'trade_date',
+                field]].copy()
+
+    del data[field]
+    # delete from cache if all data has been returned
+    if data.shape[1] == 2:
+        del tushare_cache[cache_name, code]
     return res
