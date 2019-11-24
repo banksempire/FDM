@@ -108,7 +108,10 @@ def fs_temp(func_name, min_columns_count):
             sleep(0.2)
             columns = ('ann_date', 'f_ann_date', 'end_date')
             for column in columns:
-                df[column] = pd.to_datetime(df[column])
+                try:
+                    df[column] = pd.to_datetime(df[column])
+                except:
+                    pass
             df = df.rename(columns={'end_date': 'date', 'ts_code': 'code'})
             return df
         # If tushare_cache don't have the data then download
@@ -125,3 +128,22 @@ def fs_temp(func_name, min_columns_count):
             del tushare_cache[func_name, code]
         return res
     return func
+
+
+# Income Statement
+income = fs_temp('income', 2)
+
+# Balance Sheet
+balancesheet = fs_temp('balancesheet', 2)
+
+# Cash Flow Statement
+cashflow = fs_temp('cashflow', 2)
+
+# Performence Forecast
+forecast = fs_temp('forecast', 2)
+
+# Performence Express
+express = fs_temp('express', 2)
+
+# Financial Matrix
+fina_indicator = fs_temp('fina_indicator', 2)
