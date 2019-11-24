@@ -36,7 +36,7 @@ def updater(method, max_retry=10):
     return downloader
 
 
-TUSHARE_CACHE = defaultdict(DataFrame)
+tushare_cache = defaultdict(DataFrame)
 
 
 def daily(cls, code: str, field: str, start: datetime, end: datetime):
@@ -50,11 +50,11 @@ def daily(cls, code: str, field: str, start: datetime, end: datetime):
                        end_date=end.strftime('%Y%m%d'))
         return df
 
-    if TUSHARE_CACHE['daily', code].empty:
-        TUSHARE_CACHE['daily', code] = downloader(
+    if tushare_cache['daily', code].empty:
+        tushare_cache['daily', code] = downloader(
             code, start, end)
 
-    data = TUSHARE_CACHE['daily', code]
+    data = tushare_cache['daily', code]
     res = data[['ts_code',
                 'trade_date',
                 field]].copy()
@@ -62,5 +62,5 @@ def daily(cls, code: str, field: str, start: datetime, end: datetime):
     del data[field]
     # delete from cache if all data has been returned
     if data.shape[1] == 2:
-        del TUSHARE_CACHE['daily', code]
+        del tushare_cache['daily', code]
     return res
