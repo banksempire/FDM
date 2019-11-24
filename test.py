@@ -1,4 +1,4 @@
-'''from datetime import datetime
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 from random import randint
@@ -61,57 +61,17 @@ def test_wind_wset_cons():
     print(datetime.now() - time)
 
 
+def test_tushare_income():
+    ts = fdm.Tushare()
+    inc = ts.income()
+    inc.update('000001.SZ',
+               datetime(1990, 1, 1),
+               datetime(2020, 1, 1))
+
+
 if __name__ == '__main__':
-    test_wind_wsd()
+    fdm.utils.change_client('localhost', 27017)
+    print(client)
+    test_tushare_income()
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
-    client.close()'''
-
-from datetime import datetime
-from collections import defaultdict
-
-from pandas import DataFrame
-
-tushare_cache = defaultdict(DataFrame)
-
-# -------------------------------
-# Feeder Template
-# -------------------------------
-
-
-def Template(func_name, min_columns_count):
-    def func(cls, code: str, field: str, start: datetime, end: datetime):
-        '''
-        Tushare daily trading price info.
-        '''
-
-        def downloader(code, start, end):
-            import tushare as ts
-            pro = ts.pro_api()
-            df = getattr(pro, func_name)(ts_code=code,
-                                         start_date=start.strftime(
-                                             '%Y%m%d'),
-                                         end_date=end.strftime('%Y%m%d'))
-            return df
-
-        if tushare_cache[func_name, code].empty:
-            tushare_cache[func_name, code] = downloader(
-                code, start, end)
-
-        data = tushare_cache[func_name, code]
-        res = data[['ts_code',
-                    'trade_date',
-                    field]].copy()
-
-        del data[field]
-        # delete from cache if all data has been returned
-        if data.shape[1] == min_columns_count:
-            del tushare_cache[func_name, code]
-        return res
-    return func
-
-
-print(Template('daily', 2)('', '000001.SZ', 'close',
-                           datetime(2018, 1, 1),
-                           datetime(2019, 1, 1)))
-
-print(tushare_cache)
+    client.close()
