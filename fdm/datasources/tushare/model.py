@@ -6,8 +6,10 @@ import pandas as pd
 from pandas import DataFrame
 
 
-from fdm.datasources.metaclass import _CollectionBase, _DbBase
-from .feeder import rebuilder, updater
+from fdm.datasources.metaclass import (_CollectionBase,
+                                       _DbBase,
+                                       _DynCollectionBase)
+from .feeder import rebuilder, updater, fs_temp
 
 
 class _TushareCollectionBase(_CollectionBase):
@@ -95,3 +97,19 @@ class DailyPrice(_TushareCollectionBase):
 
 class DailyAdjFactor(_TushareCollectionBase):
     method_name = 'adj_factor'
+
+# --------------------------------
+# Financial Statement
+# --------------------------------
+
+
+class IncomeStatement(_DynCollectionBase):
+    feeder_func = fs_temp('income', 2)
+
+
+class BalanceSheet(_DynCollectionBase):
+    feeder_func = fs_temp('balancesheet', 2)
+
+
+class CFStatement(_DynCollectionBase):
+    feeder_func = fs_temp('cashflow', 2)
