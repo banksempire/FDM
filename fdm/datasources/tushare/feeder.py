@@ -45,9 +45,6 @@ tushare_cache = defaultdict(DataFrame)
 
 def template(func_name, min_columns_count):
     def func(cls, code: str, field: str, start: datetime, end: datetime):
-        '''
-        Tushare daily trading price info.
-        '''
         @retry(10)
         def downloader(code, start, end):
             import tushare as ts
