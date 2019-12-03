@@ -6,7 +6,7 @@ import pandas as pd
 from fdm.datasources.metaclass import (_CollectionBase,
                                        _DbBase,
                                        _DynCollectionBase)
-from .feeder import (edb, wsd, wset_sector_constituent)
+from .feeder import (edb, wsd, wset_sector_constituent, wset_index_change)
 
 
 class Wind(_DbBase):
@@ -21,6 +21,9 @@ class Wind(_DbBase):
 
     def index_constituent(self):
         return self._inti_col(IndexConstituent)
+
+    def index_history(self):
+        return self._inti_col(IndexHistory)
 
 
 class EDB(_DynCollectionBase):
@@ -90,3 +93,41 @@ class SectorConstituent(_Constituent):
 
 class IndexConstituent(_Constituent):
     feeder_func = wset_sector_constituent('windcode')
+
+# ----------------------------
+# WSET index history
+# ----------------------------
+
+
+class IndexHistory(_DynCollectionBase):
+    feeder_func = wset_index_change()
+
+    def query(self, codes,
+              startdate,
+              enddate,
+              force_update=False,
+              skip_update=False
+              ):
+        data = super().query(codes=codes,
+                             startdate=startdate,
+                             enddate=enddate,
+                             fields='indexhistory',
+                             force_update=force_update,
+                             skip_update=skip_update
+                             )
+
+        return data
+
+    def update(self, codes,
+               fields,
+               startdate,
+               enddate,
+               force_update=False
+               ):
+
+        super().update(codes=codes,
+                       startdate=startdate,
+                       enddate=enddate,
+                       fields='indexhistory',
+                       force_update=force_update
+                       )

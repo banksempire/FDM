@@ -72,9 +72,19 @@ def test_tushare_income():
                datetime(2020, 1, 1))
 
 
+def test_wind_wset_index_history():
+    sec = fdm.Wind().index_history()
+    time = datetime.now()
+    print(sec.query('000300.SH', startdate=datetime(
+        2018, 1, 1), enddate=datetime(2019, 4, 1)))
+    print(datetime.now() - time)
+
+
 if __name__ == '__main__':
-    fdm.utils.change_client('localhost', 27017)
+    '''fdm.utils.change_client('localhost', 27017)
     print(client)
-    test_tushare_income()
+    test_tushare_income() '''
+    test_wind_wset_index_history()
+
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
     client.close()
