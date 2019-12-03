@@ -1,4 +1,5 @@
 from datetime import datetime
+from collections import defaultdict
 
 from pandas import DataFrame
 import pandas as pd
@@ -100,5 +101,41 @@ def wset_sector_constituent(sector_type: str):
                 field: value
             }
             return DataFrame([doc])
+
+    return feeder_factory(downloader, transformer)
+
+
+def wset_index_change():
+    def downloader(w, field, code, start, end):
+        # Unpack params
+        startdate = start.strftime('%Y-%m-%d')\
+            if isinstance(start, datetime) else start
+        enddate = end.strftime('%Y-%m-%d')\
+            if isinstance(end, datetime) else end
+
+        param = "startdate={s};enddate={e};windcode={c};field=tradedate,tradecode,tradestatus".format(
+            s=startdate, e=enddate, c=code)
+        # Download Data
+        data = w.wset("indexhistory", param)
+        return data
+
+    def transformer(data, field, end, start, code):
+        def gen_res(code, field, res):
+            for k, v in res.items():
+                res = {
+                    'date': k.to_pydatetime(),
+                    'code': code,
+                    field: ','.join(v)
+                }
+                yield pd.Series(res)
+
+        # Transform data
+        df = DataFrame(data.Data, columns=data.Codes, index=data.Fields).T
+        res = defaultdict(list)
+        for _, v in df.iterrows():
+            res[v['tradedate']].append(
+                '|'.join((v['tradecode'], v['tradestatus'])))
+
+        return DataFrame(gen_res(code, field, res))
 
     return feeder_factory(downloader, transformer)
