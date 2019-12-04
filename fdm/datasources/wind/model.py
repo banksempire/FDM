@@ -68,9 +68,11 @@ class _Constituent(_DynCollectionBase):
                              force_update=force_update,
                              skip_update=skip_update
                              )
-        if isinstance(data, pd.DataFrame):
+        if isinstance(data, pd.DataFrame) and not data.empty:
             df = pd.read_json(data[codes.upper()][0])
             return df
+        else:
+            return data
 
     def update(self, codes,
                fields,

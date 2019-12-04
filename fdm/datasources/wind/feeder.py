@@ -101,6 +101,8 @@ def wset_sector_constituent(sector_type: str):
                 field: value
             }
             return DataFrame([doc])
+        else:
+            return DataFrame()
 
     return feeder_factory(downloader, transformer)
 

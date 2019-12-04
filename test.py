@@ -55,9 +55,17 @@ def test_wind_edb():
 
 def test_wind_wset_cons():
     sec = fdm.Wind().sector_constituent()
-    date = datetime(2019, 11, 8)
+    date = datetime(2018, 11, 8)
     time = datetime.now()
     print(sec.query('a001010100000000', date))
+    print(datetime.now() - time)
+
+
+def test_wind_wset_index_cons():
+    sec = fdm.Wind().index_constituent()
+    date = datetime(2006, 1, 1)
+    time = datetime.now()
+    print(sec.query('000300.SH', date))
     print(datetime.now() - time)
 
 
@@ -84,7 +92,7 @@ if __name__ == '__main__':
     '''fdm.utils.change_client('localhost', 27017)
     print(client)
     test_tushare_income() '''
-    test_wind_wset_index_history()
+    test_wind_wset_index_cons()
 
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
     client.close()
