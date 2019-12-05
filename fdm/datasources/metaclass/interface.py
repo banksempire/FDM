@@ -11,7 +11,7 @@ from pymongo import MongoClient, UpdateOne
 
 from .manager import Manager
 from fdm.utils.data_structure.bubbles import TimeBubble
-from fdm.utils.tools import del_id
+from fdm.utils.tools import del_id, mongodb_name_compliance
 from fdm.utils.exceptions import FeederFunctionError
 
 
@@ -605,8 +605,8 @@ class StaColInterface(ColInterfaceBase):
 
         res: defaultdict = defaultdict(DataFrame)
         if not update_only:
-            codes = self._to_upper(codes)
-            fields = self._to_upper(fields)
+            codes = mongodb_name_compliance(codes)
+            fields = mongodb_name_compliance(fields)
             for field in fields:
                 subcol = self.col[field]
                 q_doc = {
@@ -622,8 +622,6 @@ class StaColInterface(ColInterfaceBase):
                startdate: datetime,
                enddate: datetime,
                fields: list,):
-        #codes = self._to_upper(codes)
-        #fields = self._to_upper(fields)
         params = self.manager.solve_remove_params(
             codes, fields, startdate, enddate)
 
@@ -751,13 +749,13 @@ class StaColInterface(ColInterfaceBase):
                 return bulks
 
             for field, df in batches.items():
-                df.columns = self._to_upper(df.columns)
+                df.columns = mongodb_name_compliance(df.columns)
                 bulks = convert_2_bulks(df)
                 subcol = self.col[field.upper().replace('.', '~')]
                 subcol.bulk_write(bulks, ordered=False)
 
         def create_index():
-            for field in self._to_upper(fields):
+            for field in mongodb_name_compliance(fields):
                 subcol = self.col[field]
                 subcol.create_index(self.date_name, unique=True)
 
@@ -774,10 +772,6 @@ class StaColInterface(ColInterfaceBase):
                 exe.submit(write_batch_to_db, batches)
 
         self.manager.log.flush()
-
-    def _to_upper(self, items) -> list:
-        '''Convert codes to deal with multi type.'''
-        return [v.upper().replace('.', '~') for v in items]
 
     def _insert(self, df: DataFrame, code, field, bubble):
         '''Insert DataFrame into each sub collections accordingly.'''

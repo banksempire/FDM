@@ -96,8 +96,8 @@ class FieldStatus():
         codes = [codes] if isinstance(codes, str) else codes
         fields = [fields] if isinstance(fields, str) else fields
 
-        codes = self._to_upper(codes)
-        fields = self._to_upper(fields)
+        codes = mongodb_name_compliance(codes)
+        fields = mongodb_name_compliance(fields)
 
         self.fields.append(fields)
         if isinstance(key[0], str) and isinstance(key[1], str):
@@ -146,9 +146,6 @@ class FieldStatus():
             assert r.acknowledged
         else:
             raise KeyError('Code {} not found in database.'.format(code))
-
-    def _to_upper(self, items):
-        return [v.upper().replace('.', '~') for v in items]
 
 
 class Logger():
