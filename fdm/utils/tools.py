@@ -18,3 +18,10 @@ def del_id(df) -> DataFrame:
         del df['_id']
         df.index = range(df.shape[0])
     return df
+
+
+def mongodb_name_compliance(codes):
+    if isinstance(codes, str):
+        return codes.upper().replace('.', '~')
+    else:
+        return [v.upper().replace('.', '~') for v in codes]
