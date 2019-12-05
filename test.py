@@ -63,7 +63,7 @@ def test_wind_wset_cons():
 
 def test_wind_wset_index_cons():
     sec = fdm.Wind().index_constituent()
-    date = datetime(2006, 1, 1)
+    date = datetime(2005, 12, 20)
     time = datetime.now()
     print(sec.query('000300.SH', date))
     print(datetime.now() - time)

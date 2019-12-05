@@ -4,6 +4,7 @@ from collections import defaultdict
 from pymongo.collection import Collection
 
 from fdm.utils.data_structure import Bubbles
+from fdm.utils.tools import mongodb_name_compliance
 
 
 class Manager():
@@ -24,7 +25,9 @@ class Manager():
         status = self.status[codes, fields]
         for code in codes:
             for field in fields:
-                bubbles = status[code, field]
+                comp_code = mongodb_name_compliance(code)
+                comp_field = mongodb_name_compliance(field)
+                bubbles = status[comp_code, comp_field]
                 gaps: Bubbles = bubbles.gaps(
                     target_date_range)
                 if not gaps.isempty:
@@ -38,7 +41,9 @@ class Manager():
         status = self.status[codes, fields]
         for code in codes:
             for field in fields:
-                bubbles = status[code, field]
+                comp_code = mongodb_name_compliance(code)
+                comp_field = mongodb_name_compliance(field)
+                bubbles = status[comp_code, comp_field]
                 gaps: Bubbles = bubbles.intersect(
                     target_date_range)
                 if not gaps.isempty:
