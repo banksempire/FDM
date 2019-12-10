@@ -175,6 +175,7 @@ class Logger():
             'Operation': op,
             'Code': code,
             'Field': field,
-            'Bubble': bubble.to_list(),
+            'Bubble_start': bubble.min,
+            'Bubble_end': bubble.max
         }
         return doc

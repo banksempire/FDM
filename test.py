@@ -34,13 +34,13 @@ def multi_dummy():
 
 
 def test_wind_wsd():
-    codes = '000001.SZ,000002.SZ'.split(
+    codes = '000002.SZ,000004.SZ'.split(
         ',')
-    '000004.SZ,000005.SZ,000006.SZ,000007.SZ,000008.SZ,000009.SZ,000010.SZ,000011.SZ'
+    ',000005.SZ,000006.SZ,000007.SZ,000008.SZ,000009.SZ,000010.SZ,000011.SZ'
     wsd = fdm.Wind().wsd()
     time = datetime.now()
-    print(wsd.query(codes, fields='close||PriceAdj=B', startdate=datetime(
-        2019, 3, 15), enddate=datetime(2019, 4, 1), force_update=True))
+    print(wsd.query(codes, fields='acctandnotes_rcv||unit=1;rptType=1;Period=Q;Days=Alldays', startdate=datetime(
+        2010, 1, 1), enddate=datetime(2019, 4, 1)))  # , force_update=True
     print(datetime.now()-time)
 
 
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     '''fdm.utils.change_client('localhost', 27017)
     print(client)
     test_tushare_income() '''
-    test_wind_wset_index_cons()
+    test_wind_wsd()
 
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
     client.close()
