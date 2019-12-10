@@ -688,7 +688,7 @@ class StaColInterface(ColInterfaceBase):
                     TimeBubble(date_s, date_e))
             return bubbles
 
-        def binding_data(l: DataFrame, r: DataFrame, code: str, field: str):
+        def binding_data(l: DataFrame, r: DataFrame, code: str, field: str) -> DataFrame:
             if not r.empty:
                 # Convert format
                 r = r.set_index(self.date_name)[[field]]
@@ -700,6 +700,8 @@ class StaColInterface(ColInterfaceBase):
                     # If duplicated columns found
                     comb = l[code].combine_first(r[code])
                     l.loc[:, code] = comb
+                return l
+            else:
                 return l
 
         def gen_data_by_batches(update_params, batch_size=500):
