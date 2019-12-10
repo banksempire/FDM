@@ -627,17 +627,15 @@ class StaColInterface(ColInterfaceBase):
 
         for code, field, bubbles, gaps in params:
             for gap in gaps:
-
                 filter_doc: dict = {
                     self.date_name: {'$gte': gap.min,
                                      '$lt': gap.max},
                 }
-
-                subcol = self.col[field.upper().replace('.', '~')]
-                r = subcol.update_many(filter_doc,
+                #subcol = self.col[field.upper().replace('.', '~')]
+                '''r = subcol.update_many(filter_doc,
                                        {'$unset': {code: ''}},
                                        upsert=True)
-                assert r.acknowledged
+                assert r.acknowledged'''
                 # Log operation
                 bubbles = bubbles.carve(gap)
                 self.manager.log.remove(code, field, gap)
