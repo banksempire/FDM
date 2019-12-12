@@ -90,7 +90,8 @@ def FS_temp(method_name):
                 fs_table.report_type == 0
             )
             df = finance.run_query(q)
-            df['report_date'] = pd.to_datetime(df['report_date'])
+            for date_type in ('report_date', 'pub_date', 'start_date', 'end_date'):
+                df[date_type] = pd.to_datetime(df[date_type])
             return df.rename(columns={'report_date': 'date'})
 
         # If jq_cache don't have the data then download it

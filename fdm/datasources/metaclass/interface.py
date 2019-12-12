@@ -598,7 +598,6 @@ class StaColInterface(ColInterfaceBase):
         if force_update:
             # Remove targeted data from database if deemed outdated
             self.remove(codes, startdate, enddate, fields)
-            self._auto_update(codes, startdate, enddate, fields)
 
         if not skip_update:
             self._auto_update(codes, startdate, enddate, fields)
@@ -689,7 +688,7 @@ class StaColInterface(ColInterfaceBase):
             return bubbles
 
         def binding_data(l: DataFrame, r: DataFrame, code: str, field: str) -> DataFrame:
-            if not r.empty:
+            if not r.dropna().empty:
                 # Convert format
                 r = r.set_index(self.date_name)[[field]]
                 r.columns = [code]
@@ -741,9 +740,9 @@ class StaColInterface(ColInterfaceBase):
         def write_batch_to_db(batches):
             def convert_2_bulks(df):
                 bulks = []
-                for i, v in df.iterrows():
+                for i, v in df.dropna().iterrows():
                     q_doc = {self.date_name: i.to_pydatetime()}
-                    u_doc = v.dropna().to_dict()
+                    u_doc = v.to_dict()
                     bulks.append(
                         UpdateOne(q_doc, {'$set': u_doc}, upsert=True))
                 return bulks
@@ -752,7 +751,8 @@ class StaColInterface(ColInterfaceBase):
                 df.columns = mongodb_name_compliance(df.columns)
                 bulks = convert_2_bulks(df)
                 subcol = self.col[field.upper().replace('.', '~')]
-                subcol.bulk_write(bulks, ordered=False)
+                if bulks:  # if not empty
+                    subcol.bulk_write(bulks, ordered=False)
 
         def create_index():
             for field in mongodb_name_compliance(fields):
