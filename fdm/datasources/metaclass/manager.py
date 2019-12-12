@@ -98,8 +98,6 @@ class FieldStatus():
 
         codes = mongodb_name_compliance(codes)
         fields = mongodb_name_compliance(fields)
-
-        self.fields.append(fields)
         if isinstance(key[0], str) and isinstance(key[1], str):
             r = self.col.find_one({'code': codes[0]}, fields)
             try:
@@ -122,7 +120,7 @@ class FieldStatus():
         code = code.upper().replace('.', '~')
         field = field.upper().replace('.', '~')
 
-        self.fields.append(field)
+        self.fields.append([field])
         if code in self.col.distinct('code'):
             r = self.col.update_one({'code': code},
                                     {'$set': {field: value.to_list()}})
