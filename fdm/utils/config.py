@@ -38,6 +38,16 @@ config: dict = {
             }
         }
     },
+    "JQData": {
+        "DBSetting": {
+            "dbName": "jqData",
+            "date_name": "date",
+            "code_name": "code",
+            "colSetting": {
+
+            }
+        }
+    },
     "factorbase": {
         "DBSetting": {
             "dbName": "factorBase",
