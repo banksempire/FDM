@@ -91,10 +91,10 @@ def test_wind_wset_index_history():
 def test_jqdata_price():
     price = fdm.JQData().daily_price()
     import jqdatasdk as jd
-    jd.auth('user', 'pass')
+    jd.auth('user', 'pass')  # 'user', 'pass'
 
     price.update('000001.XSHE',
-                 datetime(1990, 1, 1),
+                 datetime(2019, 1, 1),
                  datetime(2020, 1, 1), force_update=True)
     df = price.query('000001.XSHE',
                      'open',
