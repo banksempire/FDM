@@ -72,3 +72,40 @@ def price(cls, code: str, field: str, start: datetime, end: datetime):
     if data.shape[1] == 2:
         del jq_cache['get_price', mode, code]
     return res
+
+# ---------Financial Statement----------
+
+
+def FS_temp(method_name):
+    def func(cls, code: str, field: str, start: datetime, end: datetime):
+        @retry(10)
+        def downloader(code, start, end):
+            from jqdatasdk import finance, query
+            fs_table = getattr(finance, method_name)
+
+            q = query(fs_table).filter(
+                fs_table.code == code,
+                fs_table.report_date >= start,
+                fs_table.report_date <= end,
+                fs_table.report_type == 0
+            )
+            df = finance.run_query(q)
+            df['report_date'] = pd.to_datetime(df['report_date'])
+            return df.rename(columns={'report_date': 'date'})
+
+        # If jq_cache don't have the data then download it
+        if jq_cache['FS', method_name, code].empty:
+            jq_cache['FS', method_name, code] = downloader(
+                code, start, end)
+        # Get result
+        data = jq_cache['FS', method_name, code]
+        res = data[['code', 'date', field]].copy()
+        # Remove returned data
+        del data[field]
+        # delete from cache if all data has been returned
+        # only useless info left in the sheet
+        if data.shape[1] == 11:
+            del jq_cache['FS', method_name, code]
+
+        return res
+    return func

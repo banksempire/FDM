@@ -10,7 +10,7 @@ from fdm.datasources.metaclass import (_CollectionBase,
                                        _DbBase,
                                        _DynCollectionBase)
 
-from .feeder import price
+from .feeder import price, FS_temp
 from .fields import *
 
 # ----------------------------
@@ -21,6 +21,15 @@ from .fields import *
 class JQData(_DbBase):
     def daily_price(self):
         return self._inti_col(DailyPrice)
+
+    def income(self):
+        return self._inti_col(Income)
+
+    def cashflow(self):
+        return self._inti_col(CashFlow)
+
+    def balance(self):
+        return self._inti_col(Balance)
 
 # ----------------------------
 # Template
@@ -58,3 +67,18 @@ class _Template(_DynCollectionBase):
 class DailyPrice(_Template):
     feeder_func = price
     fields = price_fields
+
+
+class Income(_Template):
+    feeder_func = FS_temp('STK_INCOME_STATEMENT')
+    fields = fs_fields['STK_INCOME_STATEMENT']
+
+
+class CashFlow(_Template):
+    feeder_func = FS_temp('STK_CASHFLOW_STATEMENT')
+    fields = fs_fields['STK_CASHFLOW_STATEMENT']
+
+
+class Balance(_Template):
+    feeder_func = FS_temp('STK_BALANCE_SHEET')
+    fields = fs_fields['STK_BALANCE_SHEET']

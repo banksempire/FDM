@@ -103,12 +103,27 @@ def test_jqdata_price():
     print(df)
 
 
+def test_jqdata_income():
+    price = fdm.JQData().income()
+    import jqdatasdk as jd
+    jd.auth('user', 'pass')  # 'user', 'pass'
+
+    price.update('000002.XSHE',
+                 datetime(2018, 1, 1),
+                 datetime(2020, 1, 1), force_update=True)
+    df = price.query('000002.XSHE',
+                     'total_operating_revenue',
+                     datetime(2018, 1, 1),
+                     datetime(2020, 1, 1))
+    print(df)
+
+
 if __name__ == '__main__':
     '''fdm.utils.change_client('localhost', 27017)
     print(client)
     test_tushare_income() '''
 
-    test_jqdata_price()
+    test_jqdata_income()
 
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
     client.close()
