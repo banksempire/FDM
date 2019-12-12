@@ -141,11 +141,12 @@ class _FSTemp(_DynCollectionBase):
               startdate,
               enddate,
               ):
-        super().query(codes=codes,
-                      fields=fields,
-                      startdate=startdate,
-                      enddate=enddate,
-                      skip_update=True)
+        res = super().query(codes=codes,
+                            fields=fields,
+                            startdate=startdate,
+                            enddate=enddate,
+                            skip_update=True)
+        return res
 
 
 class IncomeStatement(_FSTemp):
