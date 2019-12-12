@@ -34,7 +34,7 @@ class ColInterfaceBase():
         if include_property:
             property_name = ()
         else:
-            property_name = ('FieldStatus', 'FieldStore', 'Log')
+            property_name = ('__FieldStatus', '__FieldStore', '__Log')
         db = self.col.database
         res = []
         for name in db.list_collection_names():
