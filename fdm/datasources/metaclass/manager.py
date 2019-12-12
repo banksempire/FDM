@@ -54,7 +54,7 @@ class FieldStore():
     '''FieldStore keep track of all fields avaiable in a collection.'''
 
     def __init__(self, col: Collection):
-        self.col: Collection = col['FieldStore']
+        self.col: Collection = col['__FieldStore']
         self.cache = self.get_fields()
         self.col.create_index('field', unique=True)
 
@@ -83,7 +83,7 @@ class FieldStore():
 
 class FieldStatus():
     def __init__(self, col: Collection):
-        self.col: Collection = col['FieldStatus']
+        self.col: Collection = col['__FieldStatus']
         self.fields = FieldStore(col)
         self.col.create_index('code', unique=True)
 
@@ -148,7 +148,7 @@ class FieldStatus():
 
 class Logger():
     def __init__(self, col: Collection):
-        self.col: Collection = col['Log']
+        self.col: Collection = col['__Log']
         self.cache: list = []
 
     def insert(self, code, field, bubble):
