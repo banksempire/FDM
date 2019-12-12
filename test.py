@@ -88,11 +88,27 @@ def test_wind_wset_index_history():
     print(datetime.now() - time)
 
 
+def test_jqdata_price():
+    price = fdm.JQData().daily_price()
+    import jqdatasdk as jd
+    jd.auth('user', 'pass')
+
+    price.update('000001.XSHE',
+                 datetime(1990, 1, 1),
+                 datetime(2020, 1, 1), force_update=True)
+    df = price.query('000001.XSHE',
+                     'open',
+                     datetime(1990, 1, 1),
+                     datetime(2020, 1, 1))
+    print(df)
+
+
 if __name__ == '__main__':
     '''fdm.utils.change_client('localhost', 27017)
     print(client)
     test_tushare_income() '''
-    test_wind_wsd()
+
+    test_jqdata_price()
 
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
     client.close()
