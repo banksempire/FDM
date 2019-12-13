@@ -31,6 +31,15 @@ class JQData(_DbBase):
     def balance(self):
         return self._inti_col(Balance)
 
+    def fin_income(self):
+        return self._inti_col(FinIncome)
+
+    def fin_cashflow(self):
+        return self._inti_col(FinCashFlow)
+
+    def fin_balance(self):
+        return self._inti_col(FinBalance)
+
 # ----------------------------
 # Template
 # ----------------------------
@@ -68,6 +77,10 @@ class DailyPrice(_Template):
     feeder_func = price
     fields = price_fields
 
+# ----------------------------
+# Financial Statements
+# ----------------------------
+
 
 class Income(_Template):
     feeder_func = FS_temp('STK_INCOME_STATEMENT', 11)
@@ -82,3 +95,18 @@ class CashFlow(_Template):
 class Balance(_Template):
     feeder_func = FS_temp('STK_BALANCE_SHEET', 11)
     fields = fs_fields['STK_BALANCE_SHEET']
+
+
+class FinIncome(_Template):
+    feeder_func = FS_temp('FINANCE_INCOME_STATEMENT', 11)
+    fields = fs_fields['FINANCE_INCOME_STATEMENT']
+
+
+class FinCashFlow(_Template):
+    feeder_func = FS_temp('FINANCE_CASHFLOW_STATEMENT', 11)
+    fields = fs_fields['FINANCE_CASHFLOW_STATEMENT']
+
+
+class FinBalance(_Template):
+    feeder_func = FS_temp('FINANCE_BALANCE_SHEET', 11)
+    fields = fs_fields['FINANCE_BALANCE_SHEET']
