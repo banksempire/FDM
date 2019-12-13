@@ -136,7 +136,6 @@ if __name__ == '__main__':
     '''fdm.utils.change_client('localhost', 27017)
     print(client)
     test_tushare_income() '''
-
     test_jqdata_sector()
 
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
