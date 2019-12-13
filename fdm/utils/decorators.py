@@ -5,6 +5,7 @@ from time import sleep
 
 def retry(max_retry=10, wait=1):
     def decorator(func):
+        @functools.wraps(func)
         def warpper(*args, **kwargs):
             for _ in range(max_retry):
                 try:
