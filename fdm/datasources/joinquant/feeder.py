@@ -110,3 +110,22 @@ def FS_temp(method_name, min_count):
 
         return res
     return func
+
+# -----------sector constituents-----------
+
+
+def constituents(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
+    from jqdatasdk import get_industry_stocks
+
+    def get_data():
+        dates = pd.date_range(start, end, freq='B')
+        for date in (d.to_pydatetime() for d in dates):
+            v = get_industry_stocks(code, date)
+            res = {
+                'code': code,
+                'date': date,
+                field: ',,'.join(v)
+            }
+            yield res
+
+    return DataFrame(get_data())

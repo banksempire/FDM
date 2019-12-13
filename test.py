@@ -118,12 +118,26 @@ def test_jqdata_income():
     print(df)
 
 
+def test_jqdata_sector():
+    price = fdm.JQData().constituents()
+    import jqdatasdk as jd
+    jd.auth('user', 'pass')  # 'user', 'pass'
+
+    price.update('801150',
+                 datetime(2018, 1, 1),
+                 datetime(2018, 2, 1), force_update=True)
+    df = price.query('801150',
+                     datetime(2018, 1, 1),
+                     datetime(2018, 2, 1))
+    print(df)
+
+
 if __name__ == '__main__':
     '''fdm.utils.change_client('localhost', 27017)
     print(client)
     test_tushare_income() '''
 
-    test_jqdata_income()
+    test_jqdata_sector()
 
     #client['test']['test'].insert_one({'index': 1, 'cde.cde': 'test_value'})
     client.close()
