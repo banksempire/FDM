@@ -76,7 +76,7 @@ def price(cls, code: str, field: str, start: datetime, end: datetime):
 # ---------Financial Statement----------
 
 
-def FS_temp(method_name):
+def FS_temp(method_name, min_count):
     def func(cls, code: str, field: str, start: datetime, end: datetime):
         @retry(10)
         def downloader(code, start, end):
@@ -105,7 +105,7 @@ def FS_temp(method_name):
         del data[field]
         # delete from cache if all data has been returned
         # only useless info left in the sheet
-        if data.shape[1] == 11:
+        if data.shape[1] == min_count:
             del jq_cache['FS', method_name, code]
 
         return res

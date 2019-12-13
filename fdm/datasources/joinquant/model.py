@@ -70,15 +70,15 @@ class DailyPrice(_Template):
 
 
 class Income(_Template):
-    feeder_func = FS_temp('STK_INCOME_STATEMENT')
+    feeder_func = FS_temp('STK_INCOME_STATEMENT', 11)
     fields = fs_fields['STK_INCOME_STATEMENT']
 
 
 class CashFlow(_Template):
-    feeder_func = FS_temp('STK_CASHFLOW_STATEMENT')
+    feeder_func = FS_temp('STK_CASHFLOW_STATEMENT', 11)
     fields = fs_fields['STK_CASHFLOW_STATEMENT']
 
 
 class Balance(_Template):
-    feeder_func = FS_temp('STK_BALANCE_SHEET')
+    feeder_func = FS_temp('STK_BALANCE_SHEET', 11)
     fields = fs_fields['STK_BALANCE_SHEET']
