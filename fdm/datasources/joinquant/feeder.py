@@ -59,18 +59,18 @@ def price(cls, code: str, field: str, start: datetime, end: datetime):
     # prepare adjustment mode
     mode = field.split('||')[1] if '||' in field else None
     # If jq_cache don't have the data then download it
-    if jq_cache['get_price', mode, code].empty:
-        jq_cache['get_price', mode, code] = downloader(
+    if jq_cache['get_price', mode, code, start, end].empty:
+        jq_cache['get_price', mode, code, start, end] = downloader(
             code, start, end, mode)
     # Get result
-    data = jq_cache['get_price', mode, code]
+    data = jq_cache['get_price', mode, code, start, end]
     res = data[['code', 'date', field]].copy()
     # Remove returned data
     del data[field]
     # delete from cache if all data has been returned
     # only [code, date] left in the sheet
     if data.shape[1] == 2:
-        del jq_cache['get_price', mode, code]
+        del jq_cache['get_price', mode, code, start, end]
     return res
 
 # ---------Financial Statement----------
@@ -95,18 +95,18 @@ def FS_temp(method_name, min_count):
             return df.rename(columns={'report_date': 'date'})
 
         # If jq_cache don't have the data then download it
-        if jq_cache['FS', method_name, code].empty:
-            jq_cache['FS', method_name, code] = downloader(
+        if jq_cache['FS', method_name, code, start, end].empty:
+            jq_cache['FS', method_name, code, start, end] = downloader(
                 code, start, end)
         # Get result
-        data = jq_cache['FS', method_name, code]
+        data = jq_cache['FS', method_name, code, start, end]
         res = data[['code', 'date', field]].copy()
         # Remove returned data
         del data[field]
         # delete from cache if all data has been returned
         # only useless info left in the sheet
         if data.shape[1] == min_count:
-            del jq_cache['FS', method_name, code]
+            del jq_cache['FS', method_name, code, start, end]
 
         return res
     return func
