@@ -4,7 +4,7 @@ from collections import defaultdict
 import pandas as pd
 from pandas import DataFrame
 
-from fdm.utils.decorators import retry
+from fdm.utils.decorators import retry, timeout
 
 
 # ------------------------
@@ -19,6 +19,7 @@ jq_cache = defaultdict(DataFrame)
 
 def price(cls, code: str, field: str, start: datetime, end: datetime):
     @retry(10)
+    @timeout(10)
     def downloader(code, start, end, mode):
         import jqdatasdk as jd
         df = jd.get_price(
@@ -65,6 +66,7 @@ def price(cls, code: str, field: str, start: datetime, end: datetime):
 def FS_temp(method_name, min_count):
     def func(cls, code: str, field: str, start: datetime, end: datetime):
         @retry(10)
+        @timeout(10)
         def downloader(code, start, end):
             from jqdatasdk import finance, query
             fs_table = getattr(finance, method_name)
