@@ -1,17 +1,3 @@
-'''
-import jqdatasdk as jd
-from jqdatasdk import finance
-
-q=jd.query(finance.STK_INCOME_STATEMENT).filter(
-    finance.STK_INCOME_STATEMENT.code=='600519.XSHG',
-    finance.STK_INCOME_STATEMENT.pub_date>='2015-01-01',
-    finance.STK_INCOME_STATEMENT.report_type==0).limit(20)
-df=finance.run_query(q)
-df
-
-'''
-
-
 from datetime import datetime
 from collections import defaultdict
 
