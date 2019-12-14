@@ -50,18 +50,14 @@ def price(cls, code: str, field: str, start: datetime, end: datetime):
 def FS_temp(method_name, min_count):
     def func(cls, code: str, field: str, start: datetime, end: datetime):
         @retry(10)
-        @timeout(10)
-        def downloader(code, start, end):
-            from jqdatasdk import finance, query
-            fs_table = getattr(finance, method_name)
-
-            q = query(fs_table).filter(
-                fs_table.code == code,
-                fs_table.report_date >= start,
-                fs_table.report_date <= end,
-                fs_table.report_type == 0
+        def downloader(code, table, start, end):
+            from .api import JQDataAPI as jq
+            df = jq().get_financial_statement(
+                code,
+                table,
+                start,
+                end
             )
-            df = finance.run_query(q)
             for date_type in ('report_date', 'pub_date', 'start_date', 'end_date'):
                 df[date_type] = pd.to_datetime(df[date_type])
             return df.rename(columns={'report_date': 'date'})
@@ -69,7 +65,7 @@ def FS_temp(method_name, min_count):
         # If jq_cache don't have the data then download it
         if jq_cache['FS', method_name, code, start, end].empty:
             jq_cache['FS', method_name, code, start, end] = downloader(
-                code, start, end)
+                code, method_name, start, end)
         # Get result
         data = jq_cache['FS', method_name, code, start, end]
         res = data[['code', 'date', field]].copy()
