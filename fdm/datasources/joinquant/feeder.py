@@ -10,7 +10,7 @@ from fdm.utils.decorators import retry, timeout
 # ------------------------
 # Data cache
 # ------------------------
-jq_cache = defaultdict(DataFrame)
+jq_cache: defaultdict = defaultdict(DataFrame)
 
 # ------------------------
 # Feeders
@@ -83,12 +83,12 @@ def FS_temp(method_name, min_count):
 
 
 def constituents(cls, code: str, field: str, start: datetime, end: datetime) -> DataFrame:
-    from jqdatasdk import get_industry_stocks
+    from .api import JQDataAPI as jq
 
     def get_data():
         dates = pd.date_range(start, end, freq='B')
         for date in (d.to_pydatetime() for d in dates):
-            v = get_industry_stocks(code, date)
+            v = jq().get_industry_stocks(code, date)
             res = {
                 'code': code,
                 'date': date,
