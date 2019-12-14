@@ -19,45 +19,29 @@ jq_cache = defaultdict(DataFrame)
 
 def price(cls, code: str, field: str, start: datetime, end: datetime):
     @retry(10)
-    @timeout(10)
-    def downloader(code, start, end, mode):
-        import jqdatasdk as jd
-        df = jd.get_price(
-            security=code,
-            start_date=start,
-            end_date=end,
-            frequency='daily',
-            skip_paused=True,
-            fq=mode,
-            panel=False,
-            fill_paused=False
+    def downloader(code, start, end):
+        from .api import JQDataAPI as jq
+        df = jq().get_price_period(
+            code,
+            start,
+            end
         )
-
-        if not mode is None:
-            df = df.rename(columns={col: '||'.join((col, mode))
-                                    for col in df.columns})
-
-        df.index.name = 'date'
-        df = df.reset_index()
         df['code'] = code
-
+        df['date'] = pd.to_datetime(df['date'])
         return df
 
-    # prepare adjustment mode
-    mode = field.split('||')[1] if '||' in field else None
     # If jq_cache don't have the data then download it
-    if jq_cache['get_price', mode, code, start, end].empty:
-        jq_cache['get_price', mode, code, start, end] = downloader(
-            code, start, end, mode)
+    if jq_cache['get_price',  code, start, end].empty:
+        jq_cache['get_price', code, start, end] = downloader(code, start, end)
     # Get result
-    data = jq_cache['get_price', mode, code, start, end]
+    data = jq_cache['get_price', code, start, end]
     res = data[['code', 'date', field]].copy()
     # Remove returned data
     del data[field]
     # delete from cache if all data has been returned
     # only [code, date] left in the sheet
     if data.shape[1] == 2:
-        del jq_cache['get_price', mode, code, start, end]
+        del jq_cache['get_price', code, start, end]
     return res
 
 # ---------Financial Statement----------
