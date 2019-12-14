@@ -1,6 +1,6 @@
 config: dict = {
     "mongodb": {
-        "address": "192.168.56.1",
+        "address": "127.0.0.1",
         "port": 27017
     },
     "Tushare": {
