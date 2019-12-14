@@ -31,7 +31,7 @@ def price(cls, code: str, field: str, start: datetime, end: datetime):
         return df
 
     # If jq_cache don't have the data then download it
-    if jq_cache['get_price',  code, start, end].empty:
+    if len(jq_cache['get_price',  code, start, end].columns) == 0:
         jq_cache['get_price', code, start, end] = downloader(code, start, end)
     # Get result
     data = jq_cache['get_price', code, start, end]
@@ -63,7 +63,7 @@ def FS_temp(method_name, min_count):
             return df.rename(columns={'report_date': 'date'})
 
         # If jq_cache don't have the data then download it
-        if jq_cache['FS', method_name, code, start, end].empty:
+        if len(jq_cache['FS', method_name, code, start, end].columns) == 0:
             jq_cache['FS', method_name, code, start, end] = downloader(
                 code, method_name, start, end)
         # Get result
