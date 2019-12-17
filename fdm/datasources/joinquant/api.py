@@ -87,11 +87,12 @@ class JQDataAPI:
     def _cd_generic(self, method):
         def func(code: str,
                  date: datetime) -> DataFrame:
+            d = date.strftime('%Y-%m-%d') if not date is None else ''
             body = {
                 "method": method,
                 "token": self.__TOKEN__,
                 'code': code,
-                'date': date.strftime('%Y-%m-%d'),
+                'date': d,
             }
             response = r.post(self.__URL__, data=json.dumps(body))
             df = pd.read_csv(StringIO(response.text))
@@ -102,11 +103,12 @@ class JQDataAPI:
     def _cdl_generic(self, method):
         def func(code: str,
                  date: datetime) -> DataFrame:
+            d = date.strftime('%Y-%m-%d') if not date is None else ''
             body = {
                 "method": method,
                 "token": self.__TOKEN__,
                 'code': code,
-                'date': date.strftime('%Y-%m-%d'),
+                'date': d,
             }
             response = r.post(self.__URL__, data=json.dumps(body))
             return response.text.split('\n')
@@ -117,12 +119,14 @@ class JQDataAPI:
         def func(code: str,
                  start: datetime,
                  end: datetime) -> DataFrame:
+            s = start.strftime('%Y-%m-%d') if not start is None else ''
+            e = end.strftime('%Y-%m-%d') if not end is None else ''
             body = {
                 "method": method,
                 "token": self.__TOKEN__,
                 'code': code,
-                'date': start.strftime('%Y-%m-%d'),
-                'enddate': end.strftime('%Y-%m-%d')
+                'date': s,
+                'enddate': e
             }
             response = r.post(self.__URL__, data=json.dumps(body))
             df = pd.read_csv(StringIO(response.text))
