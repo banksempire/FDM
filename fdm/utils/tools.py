@@ -25,3 +25,7 @@ def mongodb_name_compliance(codes):
         return codes.upper().replace('.', '~')
     else:
         return [v.upper().replace('.', '~') for v in codes]
+
+
+def normalize_dt(date: datetime):
+    return datetime(year=date.year, month=date.month, day=date.day)
