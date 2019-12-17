@@ -125,7 +125,7 @@ def wset_index_change():
         def gen_res(code, field, res):
             for k, v in res.items():
                 res = {
-                    'date': k.to_pydatetime(),
+                    'date': k,
                     'code': code,
                     field: ','.join(v)
                 }
